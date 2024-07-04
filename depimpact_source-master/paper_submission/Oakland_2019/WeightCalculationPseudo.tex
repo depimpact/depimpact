@@ -1,0 +1,37 @@
+\begin{algorithm}[!htb]
+    \caption{Weight Computation}
+    \SetKwFunction{CombineWeight}{CombineWeight}
+    \KwIn{Weighted Dependency Graph, $G$}
+    \KwOut{Weighted Dependency Graph, $G$}
+    
+    \For{$v \in G$}{
+        $Set \leftarrow G.incomingEdgeOf(v)$ \\
+        % \For{$e \in Set$}{
+        %     $D_{total} \mathrel{+}= dataWeight(e)$\; \\
+        %     $T_{total} \mathrel{+}= timeWeight(e)$\; \\
+        %     $S_{total} \mathrel{+}= structureWeight(e)$\; \\
+        % }
+        $T_{total}$ \leftarrow \sum_{e \in Set} f_{T_{e}} \\
+        $D_{total}$ \leftarrow \sum_{e \in Set} f_{D_{e}} \\
+        $C_{total}$ \leftarrow \sum_{e \in Set} f_{C_{e}} \\
+        \For{$e \in Set$}{
+            $f_{T_{e}} \leftarrow f_{T_{e}}/T_{total}$ \\
+            $f_{D_{e}} \leftarrow f_{D_{e}}/D_{total}$ \\
+            $f_{C_{e}} \leftarrow f_{C_{e}}/C_{total}$ \\
+        }
+        $Cluster1, Cluster2$ \leftarrow $Kmeans++(Set)$ \\
+        $(a_{Te},a_{De}, a_{Ce})$ \leftarrow $LDA(Cluster1, Cluster2)$ \\
+        \For{$e \in Set$}{
+            $W_{e} \leftarrow a_{Te}*f_{T_{e}}+a_{De}*f_{D_{e}}+a_{Ce}*f_{C_{e}}$
+        }
+        $W'$ \leftarrow \sum_{e \in Set} W_{e}\; \\
+        % \For{$e \in Set$}{
+        %     $W_{total} \mathrel{+}= \CombineWeight{e}$\;
+        % }
+        \For{$e \in Set$}{
+            % $e.weight \leftarrow \CombineWeight{e}/W_{total}$ \; \\
+            $W_{e} \leftarrow W_{e}/W'$ \\
+        }
+    }
+    \label{alg:weightCalculation}
+\end{algorithm}

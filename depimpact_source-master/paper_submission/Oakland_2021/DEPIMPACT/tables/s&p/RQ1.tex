@@ -1,0 +1,22 @@
+\begin{table}[t]
+\centering
+\caption{Dependency graph reduction of \tool and baseline approaches (\# Edges)}
+\resizebox{0.5\textwidth}{!}{
+\begin{tabular}{crrrrr}
+\hline
+\textbf{Attack}              & \multicolumn{1}{c}{\textbf{CPR}} & \multicolumn{1}{c}{\textbf{ReadOnly}} & \multicolumn{1}{c}{\textbf{PrioTracker}} & \multicolumn{1}{c}{\textbf{NoDoze}} & \multicolumn{1}{c}{\textbf{\tool}} \\ \hline
+Wget Executable            & 363                              & 58                                    & 58                                       & 288                                 & 49                                         \\ 
+Illegal Storage            & 62073                            & 16211                                 & 6948                                     & 10260                               & 67                                         \\ 
+Illegal Storage 2           & 378326                           & 89779                                 & 37112                                    & 19512                               & 607                                        \\ 
+Hide File                  & 3273769                          & 613303                                & 114614                                   & 37253                               & 805                                        \\ 
+Steal Information          & 3291208                          & 618025                                & 115223                                   & 20426                               & 854                                        \\ 
+Backdoor Download          & 60390                            & 15990                                 & 6024                                     & 269                                 & 59                                        \\ 
+Annoying Server User & 318                              & 56                                    & 39                                       & 227                                 & 21                                         \\ 
+Shellshcok                 & 229                              & 88                                    & 101                                      & 27                                  & 49                                         \\ 
+Dataleak                   & 459                              & 73                                    & 31                                       & 212                                 & 24                                         \\ 
+VPN Filter                  & 661                              & 56                                    & 552                                      & 163                                 & 25                                         \\ 
+\textbf{Avg}               & 706779.6                         & 135363.9                              & 28070.2                                  & 8863.7                              & 256                                      \\ \hline
+\end{tabular}
+}
+\label{tab:rq1}
+\end{table}

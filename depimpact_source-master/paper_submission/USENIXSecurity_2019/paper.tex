@@ -1,0 +1,105 @@
+% \documentclass[conference]{IEEEtran}
+% \IEEEoverridecommandlockouts
+
+\documentclass[letterpaper,twocolumn,10pt]{article}
+\usepackage{usenix2019_v3}
+
+% to be able to draw some self-contained figs
+\usepackage{tikz}
+\usepackage{amsmath}
+
+% inlined bib file
+\usepackage{filecontents}
+
+% The preceding line is only needed to identify funding in the first footnote. If that is unneeded, please comment it out.
+\usepackage{graphicx}
+\usepackage{epstopdf} %converting to PDF
+\usepackage{xspace}
+\usepackage{enumitem}
+\usepackage{svg}
+\usepackage[ruled,linesnumbered]{algorithm2e}
+\usepackage{subfig}
+\usepackage{adjustbox}
+\usepackage{wrapfig}
+\usepackage{graphbox}
+\usepackage{rotating}
+\usepackage{pdfpages}
+\usepackage{mdwlist}
+
+\newcommand{\tool}{\textsc{SysRep}\xspace}
+\newcommand{\lpfixed}{\textsc{LP-Fixed}\xspace}
+\newcommand{\lpglobal}{\textsc{LP-Global}\xspace}
+\newcommand{\lpglobalplus}{\textsc{LP-Global+}\xspace}
+\renewcommand{\baselinestretch}{0.97}
+
+\input{macros}
+%\setcopyright{acmcopyright}
+% \setcopyright{none}
+
+\begin{document}
+
+\title{\tool: Towards Automatic Attack Investigation via Weight-Aware Reputation Propagation from System Monitoring}
+% {\footnotesize \textsuperscript{*}Note: Sub-titles are not captured in Xplore and
+% should not be used}
+% \thanks{Identify applicable funding
+
+
+
+%agency here. If none, delete this.}
+% }
+
+% \author{\IEEEauthorblockN{1\textsuperscript{st} Given Name Surname}
+% \IEEEauthorblockA{\textit{dept. name of organization (of Aff.)} \\
+% \textit{name of organization (of Aff.)}\\
+% City, Country \\
+% email address}
+% \and
+% \IEEEauthorblockN{2\textsuperscript{nd} Given Name Surname}
+% \IEEEauthorblockA{\textit{dept. name of organization (of Aff.)} \\
+% \textit{name of organization (of Aff.)}\\
+% City, Country \\
+% email address}
+% \and
+% \IEEEauthorblockN{3\textsuperscript{rd} Given Name Surname}
+% \IEEEauthorblockA{\textit{dept. name of organization (of Aff.)} \\
+% \textit{name of organization (of Aff.)}\\
+% City, Country \\
+% email address}
+% \and
+% \IEEEauthorblockN{4\textsuperscript{th} Given Name Surname}
+% \IEEEauthorblockA{\textit{dept. name of organization (of Aff.)} \\
+% \textit{name of organization (of Aff.)}\\
+% City, Country \\
+% email address}
+% \and
+% \IEEEauthorblockN{5\textsuperscript{th} Given Name Surname}
+% \IEEEauthorblockA{\textit{dept. name of organization (of Aff.)} \\
+% \textit{name of organization (of Aff.)}\\
+% City, Country \\
+% email address}
+% \and
+% \IEEEauthorblockN{6\textsuperscript{th} Given Name Surname}
+% \IEEEauthorblockA{\textit{dept. name of organization (of Aff.)} \\
+% \textit{name of organization (of Aff.)}\\
+% City, Country \\
+% email address}
+% }
+
+\maketitle
+
+\input{abstract}
+% \input{keywords}
+\input{intro}
+\input{background}
+\input{overview}
+\input{approach}
+\input{eval}
+\input{discussion}
+\input{literature}
+\input{conclusion}
+
+% \bibliographystyle{IEEEtranS}
+\bibliographystyle{plain}
+\bibliography{refs}
+
+\end{document}

@@ -1,0 +1,81 @@
+
+\section{Related Work}
+\label{sec:literature}
+
+In this section, we survey three categories of related work.
+
+\myparatight{Weight Computation}
+Several components of \tool are built up on a set of existing techniques. Our local edge clustering step is based on Multi-KMeans++~\cite{Arthur:2007:KAC:1283383.1283494}, which optimizes the seed initialization
+%and leads to 
+for better clustering quality, compared with the standard KMeans. Our local feature projection step is 
+%constructed 
+based on Linear Discriminant Analysis (LDA)~\cite{Mika99fisherdiscriminant}, which finds a linear combination of features that characterizes or separates multiple classes of objects. Yet, to apply it in our setting, we extend the standard LDA to handle the challenges including lack of a prior class information, matrix singularity, and limited number of labeled instances. 
+
+\myparatight{Reputation Propagation}
+Our reputation propagation model is inspired by the TrustRank algorithm~\cite{Gyongyi:2004:vldb}, which is originally designed to separate spam and reputable web pages: it first selects a small set of reputable seed pages, then propagates the trust scores following the link structures using the PageRank algorithm~\cite{Page:techreport:1998}, and identifies spam pages as those with low scores. Similar ideas have been applied in security and privacy application scenarios
+including Sybil detection~\cite{cao2012sybilrank,Gong:2014:tifs,gao2018sybilfuse}, fake review detection~\cite{Rayana:2015:COS:2783258.2783370}, and attribute inference attacks~\cite{jia2017attriinfer,wang2018graph}.
+The model implemented in this work differs in that it propagates the reputation score in an inheritance fashion rather than a distribution fashion, which avoids the serious degradation of reputation scores after propagating on long dependency paths.
+%Wang et al.~\cite{wang2018graph} arguments the graph-based security analysis with weighted edges to counter cases with large number of heterogeneous edges. 
+%Their approach requires the labels of the nodes to train a model, which is difficult to obtain for the diversified set of the attacks.
+
+
+\myparatight{Forensic Analysis Using System Audit Logs}
+% Significant progress has been made to leverage system-level audit logs for
+% forensic analysis.
+%
+Causality analysis based on system monitoring data plays a critical role.
+King et al.~\cite{backtracking,backtracking2} proposed a backward causality analysis
+technique to perform intrusion analysis by 
+automatically reconstructing a series of events that are dependent on a user-specified event.
+Goel et al.~\cite{taser} proposed a technique that recovers from an intrusion
+based on forensic analysis.
+Further efforts have been made to mitigate the dependency explosion problem by performing fine-grained causality analysis~\cite{beep,ma2016protracer,mcitracking}, prioritizing dependencies~\cite{liu2018priotracker}, customized kernel~\cite{trustkernel}, and optimizing storage~\cite{loggc,reduction,reduction2}. 
+% BEEP~\cite{beep} identified the event handling loops in programs and enabled selective logging for unit boundaries and unit dependencies through instrumentation. Ma et al.~\cite{ma2016protracer} alternated between logging and taint tracking to derive more accurate dependencies.
+% Kwon et al.~\cite{mcitracking} further leveraged context-sensitive causal models to improve the analysis.
+% Liu et al.~\cite{liu2018priotracker} proposed to learn a reference model of normal activities to prioritize abnormal activities.
+%
+%
+%
+However, these works still require non-trivial efforts from the security analysts to inspect the output dependency graphs, while \tool makes the first step to address this problem through automatic reputation propagation and attack sequence reconstruction. 
+Nonetheless, \tool can be integrated with these works by using their dependency graphs to capture more types of attacks.
+
+Behavior querying leverages domain-specific languages (DSLs) to search the attack patterns of system call events.
+Gao et al.~\cite{gao2018aiql,gao2018saql} proposed a domain-specific languages that enables efficient attack investigation by querying the historical and real-time stream of system audit logs.
+% Gao et al.~\cite{gao2018saql} further proposed a language for the streaming settings to query the real-time anomaly patterns.
+A major limitation of these DSLs is that they require the security analysts to manually construct the behavior queries, which is labor-intensive and error-prone.
+
+To reduce the false threat alarms
+%of threat detection, 
+Hassan et al.~\cite{hassan2019nodoze} proposed to rely on the contextual and historical information of generated threat alert to combat threat alert fatigue.
+% automate provenance analysis, reducing large number of false alarms keeping the true attack scenarios. Based on their ranked threats, \tool can further complement their work in revealing attack sequence for the threats. 
+Milajerdi et al.~\cite{HOLMES} proposed to rely on the correlation of suspicious information flows to detect ongoing attack campaigns.
+Pasquier et al.~\cite{pasquier2018runtime} proposed a runtime analysis of provenance by combining runtime kernel-layer reference monitor with a query module mechanism. 
+\tool can be interoperated with these 
+%runtime 
+systems to achieve a better defense.
+
+\eat{
+To mitigate the burden of storing large amount of system monitoring data, 
+Lee et al.~\cite{loggc} proposed to leverage garbage collection to remove temporary files,
+Xu et al.~\cite{reduction} proposed to merge dependencies while still preserving high-fidelity causal dependencies,
+and Tang et al.~\cite{reduction2} used templates to summarize the set of system libraries loaded at the process initiation period.
+\tool can be 
+integrated with these works to achieve better scalability for handling cases that span a long period of time (\eg months).}
+
+
+
+
+
+% \pgao{cite adam bates - usenix 15 paper}
+
+
+
+\eat{
+Compared to these existing works, \tool addresses the dependency explosion problem via computing weights for each dependency based on our novel features and pruning edges with low weights, which do not require heuristics~\cite{backtracking,backtracking2}, binary instrumentation~\cite{ma2016protracer,mcitracking}, modification of kernels~\cite{trustkernel}, or reference models of normal activities~\cite{liu2018priotracker}.
+Moreover, \tool provides reputation propagation that can automatically identify malicious payloads, which cannot be done by all these works.
+}
+
+\eat{
+The model implemented in this work differs in that it propagates the reputation scores of both benign and malicious entities, leading to faster convergence of propagation. 
+}
+

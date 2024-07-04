@@ -1,0 +1,32 @@
+\begin{table*}[]
+\centering
+\ra{1.2}
+\caption{Runtime performance of \tool and baseline approach}
+\resizebox{0.96\textwidth}{!}{
+\begin{tabular}{crrrrrrrr}
+\hline
+
+                            & \multicolumn{1}{c}{}                                             & \multicolumn{1}{c}{}                                         & \multicolumn{2}{c}{\textbf{Dependency Weight Computation (s)}}                                      & \multicolumn{2}{c}{\textbf{Dependency Impact Propagation (s)}}                                             \\ \cline{4-7} 
+
+\multirow{-2}{*}{\textbf{Attack}} & \multicolumn{1}{c}{\multirow{-2}{*}{\textbf{Causality Ana.(s)}}} & \multicolumn{1}{c}{\multirow{-2}{*}{\textbf{Edge Merge(s)}}} & \multicolumn{1}{c}{\tool} & \multicolumn{1}{c}{Avg. Proj.} & \multicolumn{1}{c}{\tool} & \multicolumn{1}{c}{Avg. Proj.}  & \multicolumn{1}{c}{\multirow{-2}{*}{\textbf{NoDoze(s)}}}\\ \hline
+Wget Executable            & 120.97            & 0.05           & 0.26                         & 0.02   & 0.06                  & 0.06     & 1.55\\
+Illegal Storage            & 92.86             & 0.38           & 7.43                         & 0.39   & 19.48                 & 47.77    & 173.65\\
+Illegal Storage2           & 95.13             & 3.02           & 52.68                        & 33.79  & 160.08                & 1,038.55  & 329.31\\
+Hide File                  & 223.63            & 42.16          & 463.68                       & 16.14  & 1,150.35              & 8,486.32  & 899.29\\
+Steal Information          & 129.82            & 39.51          & 479.02                       & 15.98  & 1,157.45              & 8,128.28 & 620.87\\
+Backdoor Download          & 19.74             & 0.44           & 13.87                        & 0.32   & 12.75                 & 24.05    & 0.71\\
+Annoying Server User\_user & 17.23             & 0.01           & 0.18                         & 0.01   & 0.03                  & 0.03     & 0.44\\
+Shellshcok                 & 0.05              & 0.03           & 0.07                         & 0.01   & 0.02                  & 0.06     & 0.08\\
+Dataleak                   & 0.09              & 0.01           & 0.28                         & 0.02   & 0.14                  & 0.16     & 0.01\\
+VPN Filter                 & 0.28              & 0.04           & 0.35                         & 0.03   & 0.11                  & 0.14     & 0.07\\
+Five Dir. Case1            & 0.81              & 0.01           & 0.10                         & 0.01   & 0.04                  & 0.02     & 0.02\\
+Five Dir. Case3            & 2.38              & 0.29           & 9.68                         & 0.12   & 1.93                  & 2.21     & 39.50\\
+Theia Case1                & 73.28             & 8.75           & 276.80                       & 1.88   & 289.77                & 191.85   & 30.36\\
+Theia Case3                & 106.17            & 8.34           & 498.81                       & 3.06   & 561.95                & 391.96   & 65.88\\
+Trace Case5                & 1.92              & 0.01           & 0.14                         & 0.01   & 0.11                  & 0.01     & 0.54 \\
+\textbf{AVG}                        & 58.96             & 6.87           & 120.22                       & 4.78   & 223.62                & 1,220.77  & 144.15\\ \hline
+\end{tabular}
+}
+\label{tab:rq4performance}
+\end{table*}
+

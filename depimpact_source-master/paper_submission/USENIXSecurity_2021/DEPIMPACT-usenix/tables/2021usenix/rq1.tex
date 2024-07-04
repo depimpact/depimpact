@@ -1,0 +1,28 @@
+\begin{table}[t]
+\centering
+\ra{1.2}
+\caption{Statistics of dependency graphs generated for the 10 attacks}
+\label{tab:rq1}
+\resizebox{0.48\textwidth}{!}{
+\begin{tabular}{@{}crrrrr@{}}
+\toprule
+\textbf{Attack}      & \multicolumn{1}{c}{\textbf{CPR}} & \multicolumn{1}{c}{\textbf{ReadOnly}} & \multicolumn{1}{c}{\textbf{PrioTracker}} & \multicolumn{1}{c}{\textbf{NoDoze}} & \multicolumn{1}{c}{\textbf{\tool}} \\ \midrule
+Wget Executable      & 363                           & 58                                 & 58                                    & 288                              & 48                                \\
+Illegal Storage      & 62,073                        & 16,211                             & 6,948                                 & 10,260                           & 43                                \\
+Illegal Storage2     & 378,326                       & 89,779                             & 37,112                                & 19,512                           & 7                                 \\
+Hide File            & 3,273,769                     & 613,303                            & 114,614                               & 37,251                           & 437                               \\
+Steal Information    & 3,291,208                     & 618,025                            & 115,223                               & 20,426                           & 750                               \\
+Backdoor Download    & 60,390                        & 15,990                             & 6,024                                 & 269                              & 20                                \\
+Annoying Server User & 318                           & 56                                 & 39                                    & 227                              & 23                                \\
+Shellshcok           & 3,600                         & 590                                & 518                                   & 911                              & 451                               \\
+Dataleak             & 1,152                         & 231                                & 211                                   & 687                              & 223                               \\
+VPN Filter           & 1,879                         & 298                                & 244                                   & 217                              & 263                               \\
+Five Dir. Case1      & 272                           & 18                                 & 18                                    & 257                              & 7                                 \\
+Five Dir. Case3      & 78,075                        & 77,824                             & 7,496                                 & 598                              & 33                                \\
+Theia Case1          & 816,277                       & 325,459                            & 176,800                               & 151,240                          & 62                                \\
+Theia Case3          & 1,500,717                     & 537,424                            & 269,277                               & 9,015                            & 10                                \\
+Trace Case5          & 971                           & 910                                & 459                                   & 510                              & 4                                 \\
+\textbf{AVG}         & 631,292.67                       & 153,078.40                            & 49,002.73                                & 16,777.87                           & 158.73                               \\ \bottomrule
+\end{tabular}
+}
+\end{table}

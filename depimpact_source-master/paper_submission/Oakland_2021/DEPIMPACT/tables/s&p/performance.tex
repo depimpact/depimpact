@@ -1,0 +1,31 @@
+\begin{table*}[]
+\centering
+\caption{Runtime performance of \tool and baseline approach}
+\resizebox{0.96\textwidth}{!}{
+\begin{tabular}{crrrrrr}
+\hline
+
+                            & \multicolumn{1}{c}{}                                             & \multicolumn{1}{c}{}                                         & \multicolumn{2}{c}{\textbf{Dependency Weight Computation (s)}}                                      & \multicolumn{2}{c}{\textbf{Dependency Impact Propagation (s)}}                                             \\ \cline{4-7} 
+
+\multirow{-2}{*}{\textbf{Attack}} & \multicolumn{1}{c}{\multirow{-2}{*}{\textbf{Causality Ana.(s)}}} & \multicolumn{1}{c}{\multirow{-2}{*}{\textbf{Edge Merge(s)}}} & \multicolumn{1}{c}{\tool} & \multicolumn{1}{c}{Avg. Proj.} & \multicolumn{1}{c}{\tool} & \multicolumn{1}{c}{Avg. Proj.} \\ \hline
+Wget executable                                         & 120.97                                                                                   & 0.05                                                                                 & 0.26                                                & 0.02                                                      & 0.06                                                & 0.06                                                      \\ 
+
+Illegal storage                                         & 92.86                                                                                    & 0.38                                                                                 & 7.43                                                & 0.39                                                      & 19.48                                               & 47.77                                                     \\ 
+Illegal storage 2                                       & 95.13                                                                                    & 3.02                                                                                 & 52.68                                               & 33.79                                                     & 160.08                                              & 1,038.55                                                  \\ 
+
+Hide File                                               & 223.63                                                                                   & 42.16                                                                                & 463.68                                              & 16.14                                                     & 1,150.35                                            & 8,486.32                                                  \\ 
+Steal Information                                       & 129.82                                                                                   & 39.51                                                                                & 479.02                                              & 15.98                                                     & 1,157.45                                            & 8,128.28                                                  \\ 
+
+Backdoor Download                                       & 19.74                                                                                    & 0.44                                                                                 & 13.87                                               & 0.32                                                      & 12.75                                               & 24.05                                                     \\ 
+Annoying Server User                                    & 17.23                                                                                    & 0.01                                                                                 & 0.18                                                & 0.01                                                      & 0.03                                                & 0.03                                                      \\ 
+
+Shellshock                                              & 0.05                                                                                     & 0.03                                                                                 & 0.07                                                & 0.01                                                      & 0.02                                                & 0.06                                                      \\ 
+Dataleak                                                & 0.09                                                                                     & 0.01                                                                                 & 0.28                                                & 0.02                                                      & 0.14                                                & 0.16                                                      \\ 
+
+VPN Filter                                               & 0.28                                                                                     & 0.04                                                                                 & 0.35                                                & 0.03                                                      & 0.11                                                & 0.14                                                      \\ 
+\textbf{Avg.}                                           & 69.98                                                                                    & 8.56                                                                                 & 101.78                                              & 6.67                                                      & 250.05                                              & 1,772.54                                                  \\ \hline
+\end{tabular}
+}
+\label{tab:rq4performance}
+\end{table*}
+

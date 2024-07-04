@@ -1,0 +1,47 @@
+\subsection{Phase III: Attack Investigation}
+\label{subsec:reputation-propagation}
+
+\myparatight{Surfacing Critical Edges}
+% Even after Edge Merge, there are often a large portion of relevant yet non-critical nodes and edges, such as Python run-time dependencies, dynamic linking libraries, and Linux configuration files. These elements make the graph still too messy to be interpreted by security analysts. 
+\tool leverages the weights in the dependency graph for surfacing critical edges.
+Since the weights computed by \tool aim to maximizes the differences between critical and non-critical edges, we can specify a minimum weight as threshold and hide the edges with weights below the threshold.
+For example, the weights of edges from the system libraries usually have lower weights than those reflect attack provenance, 
+and by carefully choosing this threshold, \tool can filter out the system libraries while retaining the attack provenance.
+
+Given that the weight distribution is different for each dependency graph, \tool uses a threshold value computed using $T_w * W_{avg}$, where $W_{avg}$ represents the average weights in the dependency graph.
+Based on our results in \cref{subsec:graphreduction}, choosing $T_w$ within $\lbrack 0.15,2.0 \rbrack$ can prune most of the non-critical edges while retain the critical edges. 
+In practical, security analysts can first hide the non-critical edges, and gradually show the non-critical edges with slightly higher weights by lowing the threshold. 
+
+
+\eat{
+In this sense, we specify undirected edges that carry out the information of the security event as critical edges for filtering. The threshold is specified as a multiple of average weight of all the edges in the graph (\eg 2 times the average weight). To retain the critical edges, we choose the threshold according to the minimum weight of the undirected critical edges. If there are two edges with different directions connecting the same pair of nodes in the graph, we will use the maximum of their weights for threshold computation and both of them will be kept in the filtered graph. The nodes that are not in the same weakly connected component of the POI event are also removed.  }
+
+\myparatight{Reputation Propagation}
+% The goal of this part is to provide a numerical method to help security analyst automatically investigate all the potential malicious entities. 
+% \subsubsection{Seed Selection}
+To perform reputation propagation, \tool assigns seed nodes with initial reputations firstly.
+Seed nodes are usually trusted sources such as official updates like Microsoft updater or Chrome updater (assigned with high reputations), system libraries like libc (assigned with neutral reputations), or unknown sources like USB sticks or malicious websites (assigned with low reputations). For each trusted seed, its initial reputation is assigned as $1.0$, for each untrusted or unknown seed, its initial reputation is assigned as $0.0$. The underlying assumption is that if a file or a program is downloaded or installed from a reputable source, it should be more reliable than the file downloaded from an unknown website or from an untrusted equipment. The reputation of files and programs from the reliable sources and channels should be higher than  the reputation of those from unknown sources and channels. Thus, a file from the trusted seed will has a reputation closer to $1.0$, otherwise it should closer to $0.0$. The initial reputations of seed nodes representing system packages are set to $0.5$ (in between the initial reputations of trusted seeds and untrusted seeds). Because the system packages will be used by both legitimate users and attackers, we cannot predict a node's nature from its causal relationship with the nodes representing system packages.
+
+Based on the weight of each edge and chosen seeds, we iterative update the node's reputation except the chosen seeds. Any node's reputation can be computed as follows:  
+\begin{equation}
+    \label{eq:reputation}
+     R_{v} =\sum_{e \in IncomingEdge(v)} R_{source(e)}*W_e,
+\end{equation}
+where $IncomingEdge(v)$ represents the set of incoming edges of $v$, $source(e)$ represent the source node of $e$, $R_{source(e)}$ represents the reputation of $source(e)$, and $W_e$ represents the weight of $e$.
+This process will not stop until the change of all the nodes' reputations is smaller than a given threshold (\eg $\delta$). Empirically, we set $\delta = 1.0E-13 $.  
+
+
+
+\input{ReputationPropagationPseudo.tex}
+
+\cref{alg:reputaionPropagation} shows the details of reputation propagation. 
+A node $v$ in the dependency graph receives its reputation by aggregating the weighted reputations from all of its parent nodes (Lines 7-9).
+In our context, such aggregation style of reputation propagation works better than the distribution style, which ensures the sum of reputations for $v$'s children nodes to be equal to $v$'s reputation.
+The reason is that the distribution style will make the reputation degrade quickly in a few hops, which does not work well for dependency graphs that often have many paths with many hops.
+The process of reputation propagation is an iterative process.
+For each iteration, the algorithm computes the sum of reputation differences for all the nodes (Line 11).
+The propagation terminates when the differences between the current iteration and the previous iteration is smaller than a threshold (Line 1), indicating that the reputations for all the nodes become stable.
+Note that the reputations of the seed nodes remain unchanged (Lines 4-6).
+
+
+

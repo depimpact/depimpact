@@ -1,0 +1,17 @@
+% \begin{algorithm}[b]
+% 	\KwIn{A dependency Graph(G)}
+% 	\KwResult{A queue containing the vertex pair need to be splited}
+% 	\textbf{function}: FindPair$\textit(G)$\\
+% 	$V \leftarrow G.vertexSet$\;
+% 	\For{$\forall v \in V$}{
+% 		$Set \leftarrow$ incoming edges of $v$\;
+% 		\If{$\exists e \in Set$ sharing the same source}{
+% 			$vertexPair.source \leftarrow e.source$\;
+% 			$vertextPair.target \leftarrow e.targetv$\;
+% 			$vertexPair.object.list$ add $e$\; 
+% 			$Queue$ add $vertexPair$\;}
+% 	}
+% 	\Return{Queue}
+% 	\caption{FindPair}
+% 	\label{alg:find}
+% \end{algorithm}

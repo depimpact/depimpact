@@ -1,0 +1,58 @@
+% \begin{table}[!hbt]
+% \centering
+% \caption{POI reputation under uniform library reputation}
+% \begin{tabular}{|l|r|r|}
+% \hline
+% Case                    & Uni. Library & Uni.Lib \& Special. \\ \hline
+% curl                    & 0.99     & 0.91     \\ \hline
+% mal\_script             & 0.95     & 0.83     \\ \hline
+% python\_wget            & 0.99     & 0.87     \\ \hline
+% scp                     & 1.00     & 0.92     \\ \hline
+% shell\_wget             & 0.98     & 0.88     \\ \hline
+% 3File                   & 1.00     & 0.97     \\ \hline
+% 2File                   & 1.00     & 0.88     \\ \hline
+% wget                    & 1.00     & 0.99     \\ \hline
+% cmd\_inject\_step3      & 1.00     & 0.82     \\ \hline
+% cmd\_inject\_step5      & 0.97     & 0.90     \\ \hline
+% shellshock\_leak        & 1.00     & 0.83     \\ \hline
+% shellshock\_pass\_step1 & 1.00     & 0.85     \\ \hline
+% shellshock\_pass\_step4 & 0.99     & 0.92     \\ \hline
+% shellshock\_pass\_step5 & 0.99     & 0.89     \\ \hline
+% shellshock\_pene\_step1 & 0.97     & 0.85     \\ \hline
+% shellshock\_pene\_step3 & 0.95     & 0.79     \\ \hline
+% vpn\_filter\_step1      & 0.99     & 0.80     \\ \hline
+% vpn\_filter\_step5      & 1.00     & 0.86     \\ \hline
+% \end{tabular}
+% \label{tab:diffSeedReputation}
+% \end{table}
+\begin{table}[!t]
+\centering
+\caption{POI reputation of different reputation schemes}
+\resizebox{0.45\textwidth}{!}{
+\begin{tabular}{|l|r|r|r|}
+\hline
+\multirow{2}{*}{\textbf{Case}}              &    \multicolumn{1}{c|}{\textbf{Uniform Lib}}   & \multicolumn{2}{c|}{\textbf{Uniform All}} \\ \cline{2-4}
+             & \multicolumn{1}{c|}{\textbf{POI}} & \multicolumn{1}{l|}{\textbf{POI}} & \multicolumn{1}{l|}{\textbf{Avg. Non-Lib}}  \\ \hline
+curl                    & 0.99     & 0.91               & 0.91      \\ \hline
+mal\_script             & 0.95     & 0.83               & 0.87      \\ \hline
+python\_wget            & 0.99     & 0.87               & 0.88      \\ \hline
+scp                     & 1.00     & 0.92               & 0.92      \\ \hline
+shell\_wget             & 0.98     & 0.88               & 0.89      \\ \hline
+3File                   & 1.00     & 0.97               & 0.97      \\ \hline
+2File                   & 1.00     & 0.88               & 0.88      \\ \hline
+wget                    & 1.00     & 0.99               & 0.99      \\ \hline
+command-injection-c1*      & 1.00     & 0.82               & 0.82      \\ \hline
+command-injection-c2*      & 0.97     & 0.90               & 0.93      \\ \hline
+data-leakage*        & 1.00     & 0.83               & 0.83      \\ \hline
+password-crack-c1* & 1.00     & 0.85               & 0.85      \\ \hline
+password-crack-c2* & 0.99     & 0.92               & 0.93      \\ \hline
+password-crack-c3* & 0.99     & 0.89               & 1.00      \\ \hline
+penetration-c1* & 0.97     & 0.85               & 0.87      \\ \hline
+penetration-c2* & 0.95     & 0.79               & 0.83      \\ \hline
+vpnfilter-c1*      & 0.99     & 0.80               & 0.80      \\ \hline
+vpnfilter-c2*      & 1.00     & 0.86               & 0.86      \\ \hline
+\textbf{avg}      & \textbf{0.99} &\textbf{0.88} &\textbf{0.89} \\ \hline
+\end{tabular}
+}
+\label{tab:diffSeedReputation}
+\end{table}

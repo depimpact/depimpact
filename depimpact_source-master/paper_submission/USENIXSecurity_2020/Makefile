@@ -1,0 +1,31 @@
+LATEX=pdflatex
+BIBTEX=bibtex
+RM=rm -f
+
+##############################
+TARGET=paper
+##############################
+
+TEXFILES=*.tex
+BIBFILES=*.bib
+#FIGURES=figures/*.pdf
+
+.PHONY: dvi ps pdf figures
+
+all: $(TARGET).pdf
+
+#figures:
+#	$(MAKE) -C figs
+
+${TARGET}.bbl: $(BIBFILES) $(FIGURES)
+	$(LATEX) $(TARGET)
+	$(BIBTEX) $(TARGET)
+	$(LATEX) $(TARGET)
+
+$(TARGET).pdf: $(TEXFILES) $(TARGET).bbl
+	$(LATEX) $(TARGET)
+	# latexmk -synctex=1 -interaction=nonstopmode -file-line-error -pdf $(TARGET)
+
+clean:
+	$(RM) $(addprefix $(TARGET)., aux bbl blg log dvi toc lof out ps pdf)
+#	$(MAKE) -C figs clean

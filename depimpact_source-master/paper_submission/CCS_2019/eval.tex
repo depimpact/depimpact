@@ -1,0 +1,94 @@
+\section{Evaluation}
+
+
+We built \tool ($\sim$8000 lines of code) upon Sysdig~\cite{sysdig}, and deployed our tool in a server to collect system auditing events and perform attack investigation. 
+The server is used by other users for performing daily tasks, so that enough noise of irrelevant system activities can be collected.
+We performed a series of attacks based on known exploits in the deployed environment,
+and applied \tool to
+%perform attack investigation on the 
+investigate these attacks, demonstrating the %effectiveness 
+practical efficacy of \tool.
+In total, our evaluations use
+%53GB of 
+real
+%52GB of real, 24-hour unstopped, 
+system monitoring data that consists of \emph{2 billion} events. 
+%Each attack is done with the time gap being at least 1 hour.
+
+%Specifically, we 
+We conduct four sets of evaluations.
+First, we evaluate the weight computation of \tool to see whether it can effectively reveal critical edges from non-critical edges.
+Second, to evaluate the effectiveness of \tool in propagating reputation,
+we compare the reputation scores of the POI against the expected reputation scores in both benign and attack scenarios.
+Third, we evaluate the impact of different reputation assignment schemes of \tool.
+Finally, we show the performance statistics of different components of \tool.
+
+\eat{
+we compare the weight computation in \tool with the fantou feature used by the state-of-the-art causality analysis, PrioTracker~\cite{liu2018priotracker}.
+We also compare the results with three other weight computation approaches.
+Second, to evaluate the effectiveness of \tool in propagating reputations,
+we compare the reputation scores of the POI against the expected reputation scores in benign scenarios (POI caused by trusted sources) and attack scenarios (POI caused by suspicious sources).
+Finally, we evaluate the effectiveness of \tool in revealing critical edges for attack sequence reconstruction.}
+
+
+\input{tables/summaryTable.tex}
+
+% \subsection{Evaluation Results}
+% To evaluate the accuracy and effect of our method, we prepared 20 cases. There are 10 cases covering the most common user activities including file read/write, network download and decompress. Table~\ref{tab:benignHighRP} shows the reputation result of four methods.
+% Table~\ref{tab:Reduction} shows our method reduction rate.
+
+\subsection{Evaluation Setup}
+\label{subsec:cases}
+The evaluations are conducted on a server with an Intel(R) Xeon(R) CPU E5-2637 v4 (3.50GHz), 256GB RAM running 64bit Ubuntu 18.04.1.
+We performed 8 tasks to inject benign and malicious payloads into the system through key system interfaces that are vulnerable for attacks.
+We also performed 5 real APT attacks in the deployed environment. 
+We then collected the system auditing events and applied \tool to analyze the events.
+
+
+\subsubsection{Benign and Malicious Payloads Through Key System Interfaces}
+\label{subsub:benign-cases}
+We performed 8 
+%tasks 
+cases that employ the common system interfaces to inject benign and malicious payloads. These representative system interfaces are commonly exploited in attacks~\cite{securitybook}.
+
+\begin{itemize}[noitemsep, topsep=1pt, partopsep=1pt, listparindent=\parindent, leftmargin=*]
+\item File merge: \emph{2File}, \emph{3File}
+
+\item Shell execution: \emph{shell-script} (list all files in the Home folder and write the results to a file)
+
+\item File download: \emph{curl}, \emph{wget}, \emph{shell-wget} (wget called by a shell script), \emph{python-wget} (wget called by a Python script)
+
+\item File transfer: \emph{scp}
+\end{itemize}
+
+
+
+\input{attacks.tex}
+
+
+
+
+
+
+
+\subsection{Evaluation Results}
+\label{subsec:eval-results}
+
+
+\input{reduction-results.tex}
+
+\input{reputation-results.tex}
+
+\input{evallib.tex}
+
+\input{evalperf.tex}
+
+\subsubsection{Summary}
+The evaluation results show that \tool is effective in revealing critical edges from non-critical edges in both benign and attack scenarios,
+and is effective in propagating reputation from entry nodes to the POI.
+The results further show that the edge weights of \tool can prevent perturbed reputation from system libraries and make sure the reputation of POI is strongly correlated to root cause nodes.
+Finally, \tool can finish the analysis for a case within $2$ minutes, and has the potential to be improved by adopting caching or database indexing.
+
+
+
+

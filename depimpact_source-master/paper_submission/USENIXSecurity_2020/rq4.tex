@@ -1,0 +1,11 @@
+\input{tables/usenix/RQ4compare.tex}
+\subsubsection{RQ4: Comparison with State-Of-The-Art Causality Analysis}
+In this RQ, we compare \tool with the fanout approach used in the state-of-the-art causality analysis approach, PrioTracker~\cite{liu2018priotracker}. 
+PrioTracker mainly uses the fanout of nodes to prioritize the dependencies in the causality analysis. 
+We then adapt the computed priories as the edge weights and apply the graph reduction based on these weights. 
+In this way, we can do a fair comparison between \tool and the fanout approach in graph reduction.
+\cref{tab:fanout} shows the average number of edges belongs to each weight group for 10 attacks. 
+Columns 0 represent the weight range from 0.0 to 0.1 (\ie $[0.0, 0.1\}$), similarly, the rest columns represent from 0.1 to 0.9. 
+If we use the fanout weight to filter edges, the average number of edge having high weight (\ie $\ge 0.9$) is $45,409.84$. 
+The number of edge is 215 times larger than the average number of edges processed by \tool, when it uses 3 entry nodes among the top 9 candidates to do the forward causality analysi for reduction. 
+Thus, from the view of graph reduction, the fanout method is not effective as \tool.

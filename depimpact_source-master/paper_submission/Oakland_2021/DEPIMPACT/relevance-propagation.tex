@@ -1,0 +1,82 @@
+\subsection{Phase III: Critical Component Identification}
+\label{subsec:phase3}
+
+\input{algs/relevance-propagation}
+
+
+\subsubsection{Dependency Impact Back-Propagation}
+\label{subsubsec:propagation}
+
+Given a weighted dependency graph, \tool propagates the dependency impact from the POI event to all other nodes backward along the weighted edges. 
+The dependency impact for the nodes (both source node and sink node) in the POI event is $1.0$ by default.
+%Formally speaking, the relevance score of a node is a real number in $[0, 1]$ that models the relevance of the node to POI.
+%For POI node, its relevance score is $1$.
+%
+For a node $u$, its dependency impact is iteratively updated by taking the weighted sum of dependency impacts of its child nodes: 
+
+\begin{equation}
+    \label{eq:reputation}
+     DI_{u} =\sum_{v \in childNodes(u)} DI_{v}*W_{e(u,v)}
+\end{equation}
+where $ DI_{u}$ denotes the dependency impact of node $u$ and $W_{e(u,v)}$ denotes the dependency weight (after normalization) of edge $e(u,v)$.
+%
+Such score propagation scheme guarantees that the score of any node does not exceed the maximum score of its child nodes, and the score of any node does not exceed the score of the nodes in the POI event.
+%
+Furthermore, compared to the distribution-based score propagation algorithms like PageRank~\cite{pagerank}, our scheme preserves the scores along long dependency paths and prevents fast degradation.
+
+
+\cref{alg:relevance-propagation} illustrates our dependency score propagation algorithm. 
+In each iteration, the algorithm updates the dependency impact score of each node by taking the weighted sum of the scores of  all its child nodes (Line 10), and computes the sum of score differences for all nodes (Line 11).
+The propagation terminates when the aggregate difference between the current iteration and the previous iteration is smaller than a threshold, $\delta$ (Line 2), indicating that the scores of all nodes have reached a stable point.
+We set $\delta = 1e-13$ as it gives robust results from our evaluations.
+%Note that the reputation of POI node remains unchanged (Line 1, Line 6).
+
+
+
+\subsubsection{Entry Node Ranking}
+\label{subsubsec:entry-ranking}
+After dependency impact propagation, \tool ranks the entry nodes
+%(nodes without incoming edges) 
+based on their dependency impacts.
+%
+The intuition behind entry node ranking is that entry nodes with higher dependency impacts are more related to the POI event and are more likely to be the attack entries, and thus their 
+%higher scores are more likely to be related to POI, and thus their 
+descendant nodes and associated edges are more likely to be included in the critical component that we want to identify.
+%
+By selecting the top-ranked candidates and performing forward causality analysis to identify descendants, we are able to significantly prune the dependency graph while preserving the critical parts.
+
+In the current design, we have a special treatment of system library nodes. 
+As has been shown in prior work~\cite{reduction2}, system library files are typically loaded by certain processes, and do not have incoming edges on the dependency graph.
+As the number of system library nodes could be potentially large, naively treating them all as entry nodes could add significant difficulties to entry node ranking and attack entry candidates selection, impairing the final results.
+%not robust.
+Thus, for system library nodes, we take the process nodes that load them as entry nodes.
+%
+Specifically, 
+%in the current design, 
+we classify entry nodes into three categories: (1) file entry node: file nodes that do not have incoming edges except system libraries; (2) process entry node: process nodes whose parent nodes are all system libraries; (3) network entry node: network nodes that do not have incoming edges. 
+We then select the top-ranked entry nodes from each category.
+
+
+%  file entry  就是指除了 library 之外的file, ip entry 就是所有的 ip, process entry 就是 它的父亲如果都是library 那这个process 就被当作 entry
+
+
+\eat{
+Entry nodes are the nodes without incoming edges in the dependency graph. 
+They are usually trusted sources such as official updates like Microsoft updater or Chrome updater (assigned high reputations), system libraries like libc (assigned neutral reputations), or suspicious sources like USB sticks or malicious websites (assigned with low reputations). For each trusted source, its initial reputation is set to $1.0$; for each suspicious source, its initial reputation is set to $0.0$. 
+Additionally, since the system libraries will be used by both legitimate users and attackers, we cannot easily infer a node's nature from its correlations with the system libraries. Thus, the initial reputations of system libraries are set to $0.5$. 
+However, \tool also allows security analysts to manually set the reputation for libraries.
+}
+
+
+
+
+\subsubsection{Forward Causality Analysis \& Critical Component Identification}
+\label{subsubsec:forward-causality}
+From the top-ranked entry nodes, \tool performs forward causality analysis until reaching the POI event. 
+The process is similar to the backward causality analysis as illustrated in \cref{subsubsec:backward-causality}. 
+%
+As a final step, \tool identifies the overlap of the backward dependency graph and the forward dependency graph as the critical component for output.
+%
+Compared to the original large backward dependency graph, the critical component contains the parts of dependencies that are actually relevant to the POI event and its size is significantly reduced.
+%
+Furthermore, the critical component illustrates how the attack-relevant information flows from attack entries to the POI event through critical edges, which facilitates further attack investigation.

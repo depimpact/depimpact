@@ -1,0 +1,24 @@
+%\input{tables/runtime.tex}
+
+\input{tables/usenix/Performance}
+
+
+\subsection{System Performance}
+\eat{
+To understand the performance of \tool in investigating real attacks, we measure the execution time of \tool on the attack cases.
+\tool starts the computation by parsing a log ($92.252s$ averagely) and building a global graph representation ($3.277s$ averagely).
+\cref{tab:runtime} shows the execution time for the remaining components of \tool. 
+Besides the steps shown in the preprocessing step, \emph{Causality Analysis}, \emph{Edge Merge}, and \emph{Node split} require $0.21s$, $0.06s$, and $0.003$ on average. 
+Note that \emph{Weight Computation} and \emph{Reputation Propagation} only requires $0.25s$ and $0.01s$ on average.
+In summary, the total time for running an analysis is about $2$ minutes, but the major cost (\ie log parsing) can be improved by adopting caching or database indexing~\cite{gao2018aiql}.
+}
+
+To understand the performance of \tool in attack investigation, we measure the execution time of \tool. \cref{tab:rq4performance} shows the time cost of \tool. 
+\tool starts the computation by building a dependency graph (\ie Causality Analysis). This step requires $69.98s$ on average. 
+\tool takes averagely $8.56s$ to finish the graph prepossessing. 
+
+We also compare \tool and the average-projection approach in the time cost needed for weight computation and relevance propagation. 
+We can see that \tool needs more time to do the weight computation, because \tool use the clustering algorithm to find the optimal parameters for the projection-vector normalization. 
+The shorter weight computation time for the average-projection approach is at the cost of a much longer time needed for the relevance propagation. 
+By combining the time needed for weight computation and relevance propagation, \tool reduces the time cost by $80.23\%$ compared with the average-projection approach. 
+On average, \tool requires $430s$ to finish the processing and computation for one attack.

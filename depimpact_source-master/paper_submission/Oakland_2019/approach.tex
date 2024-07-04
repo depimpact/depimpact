@@ -1,0 +1,272 @@
+\section{\tool Design}
+\label{sec:approach}
+In this section, we present the three phases and the components of \tool in detail.
+
+\input{tables/events.tex}
+\subsection{Phase I: Dependency Graph Generation}
+\label{subsec:graph-generation}
+
+In this phase, \tool leverages system auditing tools (\eg Sysdig~\cite{sysdig}) to collect information of system calls from the kernel, and then parses the collected events to build a global dependency graph.
+\tool focuses on three types of system events: (i) process creation and destruction, (ii) file access, and (iii) network access,
+and \cref{tab:events} shows the representative system calls for these three types of events in Linux.
+Particularly, for a process entity, we use the process name and PID as its unique identifier.
+For a file entity, we use the absolute path as its unique identifier. 
+For a network socket entity, as processes usually communicate with some servers using different network connections but with the same IPs and ports, treating these connections differently greatly increases the amount of data we trace and such granularity is not required in most of the cases. Thus, we use 5-tuple (\emph{$\langle$srcip, srcport, dstip, dstport, protocol$\rangle$)} as a network socket's unique identifier. 
+Failing to distinguish different entities causes problems in relating events to entities, especially for tracking dependencies of events.
+For each system call, \tool also extracts the event attributes as shown in \cref{tab:event-attributes}.
+\tool filters out failed system calls, which could cause false dependencies among events.
+
+\input{BackTrackPseudo.tex}
+
+\myparatight{Causality Analysis}
+Given a POI event $e_s$, \tool applies causality analysis~\cite{backtracking} to produce a dependency graph $G_d$, as shown in \cref{alg:backTrack}\footnote{Forward causality analysis can be implemented using a similar way.}.
+\cref{alg:backTrack} adds $e_s$ to a queue (Line 2), and repeats the process of finding eligible incoming edges of the edges (\ie incoming edges of the source nodes of edges) in the queue (Lines 3-9) until the queue is empty. The output of this module is a dependency graph only contains relevant system entities and events about the given POI event.
+
+
+
+\subsection{Phase II: Graph Preprocessing}
+\label{subsec:graph-preprocessing}
+
+\tool performs graph preprocessing to transform the dependency graph from a directed multigraph to a simple directed graph with no parallel edges.
+
+\myparatight{Edge Merge}
+The dependency graph produced by causality analysis often have many edges between the same pair of nodes.
+For example, in \cref{fig:before}, the \incode{wget} process has many edges going to and coming from a network socket, and the \incode{unzip} process also has many edges going to and coming from the file \incode{INSTALL}.
+Both of these pairs are shown in red dotted rectangles in the \cref{fig:before}.
+
+The reason for generating these excessive edges is that the OS typically finishes a read/write task (\eg file read/write) by distributing the data to multiple system calls where each system call processes only a portion of the data.
+% Although these edges preserves causal dependency~\cite{backtracking,reduction},
+% they create complication in propagating reputations: 
+% the reputation of the same node will be propagated multiple times.
+Inspired by the recent work that proposes CPR (Causality Preserved Reduction)~\cite{reduction} for dependency graph reduction, \tool merges the edges between two nodes.
+As shown in the study~\cite{reduction}, CPR does not work well for processes that have many interleaved read and write system calls, which introduces excessive causality.
+As such, \tool adopts a more aggressive approach than CPR: for edges between two nodes that represent same system call (\eg file reads from \incode{read} or network reads from \incode{recvfrom}), \tool will merge them into one edge and use their merged time windows as the time window for the merged edge. 
+Since such merge is performed after the dependency graph generation, all the dependencies are still preserved but only the time windows of certain edges are merged. 
+
+
+\noindent\textbf{Node Split}.
+After the edge merge, the dependency graph may still have parallel edges, \ie, edges indicating read or write from different system calls.
+For example, a process may receive data from a network socket via both \incode{read} and \incode{recvfrom}.
+These parallel edges create complications for weight computation and reputation propagation, making it difficult to represent the weights of all the edges using a transition matrix.
+Thus, \tool splits a node $u$ into multiple nodes, where each node has only one outgoing edge pointing to node $v$. 
+
+\tool first finds all the pair of nodes that have parallel edges.
+For a pair of nodes $(u,v)$ that have parallel edges pointing from $u$ to $v$,
+\tool creates copies of $u$ for each parallel edge.
+Each copy of $u$ is mapped to one original outgoing edge to $v$, 
+and inherits all $u$'s incoming edges that has causal dependency on the outgoing edge.
+After the node split, the dependency graph becomes a simple directed graph without parallel edges, which allows \tool to use a transition matrix to present the weights of edges.
+
+
+\subsection{Phase II: Feature Generation}
+\label{subsec:feature-generation}
+To compute the weights for edges, \tool generates three novel discriminative features from the dependency graph.
+
+\begin{itemize}[noitemsep, topsep=1pt, partopsep=1pt, listparindent=\parindent, leftmargin=*]
+
+\item \textbf{Relative Time difference:}
+For an edge $e(u,v)$, we measure the difference between its end time $te(e)$ and the end time of the POI event $te(e_s)$.
+The intuition is that the event that occurred closer to the POI event is more temporally related to the POI event, and hence should be associated with a higher feature value. 
+Thus, we define the \emph{time difference feature} $f_{T(e)}$ for the edge $e$ as:
+\begin{equation}
+\label{eq:time-feature}
+    f_{T(e)} = \ln(1 + 1/\mid t_{e} - t_{e_s}\mid),
+\end{equation}
+where $t_{(e)}$ and $t_{e_s}$ represent timestamp values (we use the event end time) 
+%(in seconds) 
+of the event edge $e$ and the POI event $e_s$.
+
+In (\ref{eq:time-feature}), $f_{T(e)}$ is a positive real number. The smaller the time difference $\mid t_e - t_{e_s}\mid$ gets, the larger the value of $f_{T(e)}$ becomes, and hence the more trust the source node $u$ puts on the destination node $v$ in the temporal dimension.
+Special action needs to be taken when the event edge $e$ is actually the POI event, and hence $\mid t_{e} - t_{e_s}\mid = 0$. To handle such a case, we specify that the minimal time difference to be one tenth of the minimal unit (\ie nanosecond) for the timestamp field in the audit logging framework (\ie $1\mathrm{e}{-10}$), and use this minimal value when computing the time difference feature of the POI event. By doing so, the POI event will have the highest time difference feature value $f_{T(e_s)} = ln(1 + 1\mathrm{e}{-10})$.
+
+\item \textbf{Relative Data Amount Difference:}
+For an edge $e(u, v)$, we measure the difference between the data amount associated with this event edge and the size of the target system entity in the POI event $e_s$.
+The intuition is that the closer the data amount of an event is to the size of the target system entity, the more likely this event edge is related to the POI event, and hence should be associated with a higher feature value. Thus, we define the \emph{data amount difference feature} $f_{D(e)}$ for the edge $e$ as:
+\begin{equation}
+\label{eq:data-feature}
+    f_{D(e)} = 1/(\mid s_{e} - s_{e_s}\mid + \alpha),
+\end{equation}
+where $s_{e}$ and $s_{e_s}$ represent the data amount of the event edge $e$ and the size of the POI file.
+
+% In (\ref{eq:data-feature}), $f_{D(e)}$ is a positive real number. The smaller the data amount difference $\mid s_{e} - s_{e_s}\mid$ get, the larger the value of $f_{D(e)}$ becomes, and hence the more trust the source node $u$ puts on the destination node $v$ in the data dimension.
+Note that in (\ref{eq:data-feature}), we use a small positive number $\alpha$ to handle the special case when $e$ is the POI event. Thus, the POI event will have the highest data amount difference feature value $f_{D(e)} = 1/\alpha$. Empirically, we set $\alpha = 1e-4$.
+
+
+\item \textbf{Concentration Degree:}
+One important category of non-critical edges that often appear in a causal graph are events that access system libraries~\cite{reduction,reduction2}. These edges are often associated with considerable data amount and occur at various timestamps, and hence using only $f_{T(e)}$ and $f_{D(e)}$ is less effective in distinguishing critical edges from non-critical ones.
+To address this challenge, we observe that most system library nodes do not have any incoming edges and these system library nodes are source nodes in the corresponding edges. 
+Also, many long-running processes have few incoming edges but many outgoing edges, and thus the weight of each outgoing edge should be smaller.
+Based on this observation, we define the \emph{concentration degree} for the edge $e(u, v)$ as:
+\begin{equation}
+    \label{eq:structure-feature}
+    f_{C(e)} = InDegree(u)/OutDegree(u),
+\end{equation}
+where $InDegree(u)$ and $OutDegree(u)$ represent the in-degree and out-degree of the source node $u$ in $e(u,v)$.
+
+% In (\ref{eq:structure-feature}), $f_{S(e)}$ is a non-negative real number. The larger the $InDegree(u)$ gets, the more trust the source node $u$ receives from is parent nodes, and hence the larger the value of $f_{S(e)}$ becomes. Similarly, the larger the $OutDegree(u)$ gets, the more number of child nodes the source node $u$ needs to puts its trust on, and hence the smaller the value of $f_{S(e)}$ becomes. 
+
+Note that if $u$ is a system library node, $InDegree(u)$ is likely to be zero, and hence $f_{D(e)} = 0$. 
+For seed nodes, since they are very important in initiating the reputation propagation, we set their concentration degree to be $1$.
+
+
+\end{itemize}
+
+
+
+
+\myparatight{Local Feature Normalization}
+% \label{subsubsec:feature-normalization}
+Before using the features to compute weights, it is often a good practice to scale them in the same range.
+Globally scaling them using standard methods such as range normalization and standardization~\cite{mlbook} does not intuitively make much sense in our specific setting, since a node is only affected by its parents but not by its children or siblings. 
+Recognizing this, we propose a novel \emph{local feature scaling} scheme: for an edge $e(u, v)$, we \emph{locally} normalize its feature $f$ by the sum of the feature of all incoming edges of node $v$. Thus, for node $v$, this scheme enables the features of all its incoming edges to be compared in the same scale. The higher the normalized feature gets, the more influence its corresponding parent node has on the child node $v$.
+
+\eat{
+Formally, for an edge $e(u,v)$, its feature $f_{(e)}$ is locally normalized according to the following equation:
+\begin{equation}
+    \label{eq:local-feature-normalization}
+    f_{(e)} = f_{(e)}/\sum_{e' \in IncomingEdge(v)} f_{(e')}
+\end{equation}
+where $IncomingEdge(v)$ represents the set of incoming edges of node $v$.
+
+We use (\ref{eq:local-feature-normalization}) to normalize the three features $f_{T(e)}$, $f_{D(e)}$, and $f_{S(e)}$. After normalization, each feature is scaled to a value in $[0, 1]$.
+}
+
+
+
+\subsection{Phase II: Weight Computation}
+\label{subsubsec:weight-computation}
+The next task is to compute the weight for each edge from its three locally normalized features.
+Formally, for each edge $e(u, v) \in E$, we compute its \emph{weight}, $W_e \in [0, 1]$, which models the level of trust that the node $u$ puts on the node $v$.
+The challenge is to make these weights "discriminative", so that critical edges will have high weights and non-critical edges will have low weights.
+
+
+\eat{
+The core of effective attack investigation on weighted dependency graph is to intelligently associate each edge on the graph with a \emph{weight score} between 0 and 1, so that edges that are critical to the attack sequence (\ie \emph{critical edges}) have higher weights (\ie scores closer to 1), while edges that are non-critical to the attack sequence (\ie \emph{non-critical edges}) have lower weights (\ie scores closer to 0).}
+
+\eat{
+For an edge with a high weight, if the parent node is benign (\ie parent node has a high reputation score), we then expect the child node to be also benign (\ie child node also has a high reputation score based on our reputation propagation mechanism in Section~\ref{subsec:reputation-propagation}). 
+On the other hand, for an edge with a low weight, if the parent node is suspicious (\ie parent node has a low reputation score), we then expect the child node also to be suspicious (\ie child node also has a low reputation score). }
+
+% supervised classification does not work
+One approach to compute $W_e$ is to adopt supervised machine learning to train a binary classifier from three features and use probabilistic class estimates as weights.
+Those this approach works for many domains, it has several fundamental limitations in our specific problem context. Supervised learning approaches often require large amount of training data and require the data exhibit consistent distribution patterns across training data and testing data. However, our problem context is highly specialized for specific POI events (in fact, two of our three features are computed using attributes from POI events). What's more, our problem context is highly imbalanced and the number of critical edges is usually small.
+This unique context makes (1) the trained classifier hardly generalize across cases that investigate different POIs, and (2) the classifier lack enough training data to boost its accuracy.
+
+
+% dimensionality reduction + supervised by clustering
+Recognizing the limitations in supervised learning, \tool adopts an idea from unsupervised learning to perform dimensionality reduction via linear projection.
+Linear projection is known for its high interpretability and low computational cost~\cite{friedman2001elements}.
+Formally, for an edge $e$, its weight $W_e$ is computed by projecting its feature vector $\mathbf{f}_{(e)} = (f_{T(e)}, f_{D(e)}, f_{C(e)})$ onto a unit vector $\mathbf{w}_{e} = (w_{T(e)}, w_{D(e)}, w_{C(e)})$:
+\begin{align}
+    W_e   = &\; \mathbf{f}_{e} \boldsymbol{\cdot} \mathbf{w}_{e} \nonumber \\
+                 = &\; w_{T(e)} * f_{T(e)} + w_{D(e)} * f_{D(e)} \nonumber \\
+                & + w_{C(e)} * f_{C(e)}\label{eq:projection}
+\end{align}
+where $\norm{\mathbf{w}_{(e)}} = 1$.
+
+\input{WeightCalculationPseudo.tex}
+
+To address the key challenge of making weights ``discriminative", we propose a novel \emph{discriminative local feature projection} scheme that leverages the idea from discriminant analysis~\cite{mlbook}. Different from another popular dimensionality reduction method PCA, which finds the projection vector that maximizes the variance of projected samples, discriminant analysis searches for the projection that maximizes the class separation of projected samples, and linear discriminant analysis (LDA)~\cite{Mika99fisherdiscriminant} the most popular approach.
+Algorithm~\ref{alg:weightCalculation} shows the detailed steps of weight computation.
+
+However, we are not able to directly applying standard LDA, due to the following reasons:
+(1) LDA requires labeld samples from different classes but we do not have labels for critical edges and non-critical edges;
+(2) Our problem context is highly localized since a node is only affected by its parents but not by its children or siblings. Globally computing the projection vector for all edges might lead to serious bias (\cref{subsec:reputation-results});
+(3) Standard LDA does not assume the within-class scatter matrix to be singular. However, this may be often in our context since the edges are highly imbalanced.
+
+
+Next, we describe how we address these challenges in extending the standard LDA.
+
+\subsubsection{Local Edge Clustering}
+To address the first challenge of lacking class labels, for each node, \tool \emph{locally clusters} its incoming edges using their features, and produces two clusters (one for critical edges, one for non-critical edges). We can then treat the two clusters as two classes (though still lacking labels) and apply LDA. Specifically, we use Multi-KMeans++ clustering algorithm~\cite{Arthur:2007:KAC:1283383.1283494}.
+Based on KMeans, KMeans++ uses a different method for choosing the initial seeds to avoid poor clustering.
+%KMeans++/KMeans clustering aims to partition the observations (points) into $k$ clusters such that each observation belongs to the cluster with the nearest center. 
+Multi-KMeans++ is a meta algorithm that performs $n$ runs of KMeans++ and then chooses the best clustering that has the lowest distance variance over all clusters. We set $k=2$ and $n=20$.
+
+
+\subsubsection{Local Feature Projection}
+Instead of globally applying LDA to all edges, for each node, we compute the projection vector \emph{locally} for its incoming edges, so that its critical edges can be maximally separated from its non-critical edges after projection.
+Formally, for node $v$, assume we have a set of 3-dimensional samples $\{x^{(1)}, x^{(2)}, \dots, x^{(N)}\}$ representing its incoming edges, $N_1$ of which belong to cluster $w_1$, and $N_2$ to cluster $w_2$ ($N1 + N2 = N$).
+The mean vector of each cluster is $\mu_1 = \frac{1}{N_1}\sum_{x\in w_1} x$, $\mu_2 = \frac{1}{N_2}\sum_{x\in w_2} x$. 
+The between-cluster scatter matrix is defined as $S_b = (\mu_1 - \mu_2)(\mu_1 - \mu_2)^T$.
+The within-cluster scatter matrix is defined as $S_w = \sum_{x\in w_i}(x-\mu_i)(x-\mu_i)^T$.
+LDA (2-clusters) then finds a vector $w$ to maximize the following Fisher criterion:
+\begin{equation}
+    \label{eq:lda-objective}
+    J(w) = \frac{w^TS_bw}{w^TS_ww}
+\end{equation}
+
+In other words, we are looking for a projection where samples from the same cluster are projected very close to each other (denominator $w^TS_ww$) and, at the same time, the projected means of different clusters are farther apart as possible (numerator $w^TS_bw$).
+
+Taking the derivative of $J(w)$ and equate it to zero, we get $S_bw =\lambda S_ww$. If $S_w$ is non-singular, we can convert \cref{eq:lda-objective} to a standard eigenvalue problem $S_w^{-1}S_bw = \lambda w$. Solving it yields
+\begin{equation}
+    \label{eq:lda-solution}
+    w^* = \argmax J(w) = S_w^{-1}(\mu_1-\mu_2)
+\end{equation}
+
+\cref{eq:lda-solution} is not applicable when the inverse of $S_w$ does not exist (\ie $S_w$ is singular). 
+However, in our problem context, such condition may happen pretty often, given that the number of incoming edges for most nodes is not large and the number of critical edges is even smaller (\ie highly imbalanced).
+%For example, if the sink node $v$ only has two incoming edges, and one of them is a critical edge, the within-cluster scatter matrix will be a zero matrix. 
+%For example, it is often the case that the sink node (process entity) has one critical edge but many other non-critical edges that read system packages, and the concentration degree feature $f_{C(u, v)}$ of the non-critical edges equals zero (since system packages often have no incoming edges). In such cases, the third row and the third column of $S_w$ are all zero.
+
+Recognizing such limitation, we extend the standard LDA by adding support for cases in which $S_w$ is singular.
+Basically, when $S_w$ is singular, we select the projection vector from the following candidates:
+
+\begin{itemize}[noitemsep, topsep=1pt, partopsep=1pt, listparindent=\parindent, leftmargin=*]
+
+    \item $S_w^{+}(\mu_1-\mu_2)$: $S_w^{+}$ is the Moore-Penrose~\cite{albert1972regression} inverse of $S_w$. When $S_w$ is non-singular, $S_w^{+} = S_w^{-1}$.
+
+    \item $\mu_1-\mu_2$
+\end{itemize}
+For each candidate, we compute the numerator of Fisher criterion $w^TS_bw$ (we normalize $w$ first), and selects the one that has a larger value.
+
+
+\myparatight{Special Cases}
+For cases the node has only one incoming edges, we skip the clustering and projection process and directly set its final weight to 1.
+
+
+
+\subsubsection{Post-processing}
+LDA computes the projection vector that maximizes the cluster separation after projection, but it does not guarantee which cluster has higher projected values.  
+In fact, the direction of the projection vector matters a lot and negating the direction will change the relative magnitude of the projected values of the two clusters.
+
+
+\myparatight{Adjusting Projection Vector Direction}
+Our goal is to make the cluster that contains critical edges have higher projected values compared to the cluster that contains non-critical edges. 
+Fundamentally, this problem is difficult to solve, since we don't have accurate labels for critical edges and thus do not actually know which cluster contains the critical edges.
+%
+We propose to address this problem using following heuristics:
+\begin{itemize}[noitemsep, topsep=1pt, partopsep=1pt, listparindent=\parindent, leftmargin=*]
+
+\item If all three dimensions of the projection vector are non-positive, negate.
+\item If all three dimensions of the projection vector are non-negative, do not negate.
+\item If the projection vector has both negative dimensions and positive dimensions, negate by condition:
+
+\begin{itemize}[noitemsep, topsep=1pt, partopsep=1pt, listparindent=\parindent, leftmargin=*]
+    \item If one cluster has seed edges and one cluster doesn't, negate the projection vector when necessary to make sure the cluster that has seed edges has a higher projected mean. This is based on the insight that seed edges should have high weights.
+    \item If both clusters have seeds edges or neither has seed edges, negate the projection vector when necessary to make sure the cluster that has a smaller size (\ie contains fewer edges) has a higher projected mean. This is based on the insight that among all incoming edges of a node, there are usually less critical edges than non-critical edges.
+\end{itemize}
+\end{itemize}
+
+Our experimental results on a wide range of realistic cases (\cref{subsec:reputation-results}) clearly demonstrate the effectiveness of our discriminative local feature projection scheme.
+After adjusting the projection vector direction, we normalize it, and compute the weight for each edge using~\cref{eq:projection}. 
+
+\myparatight{Scaling the Projected Weights to 0-1 Range}
+After computing the projected weights, one more post-processing step is needed: some edges might have negative projected values, which will cause problem for later local weight normalization (\cref{subsubsec:edge-normalization}). 
+To address this, we scale the projected values to the range $[0, 1]$. We further add a small offset (we use one hundredth of the difference of the smallest value and the second smallest value) to each scaled value so that we only have positive scaled weights.
+
+
+\subsubsection{Local Edge Weight Normalization}
+\label{subsubsec:edge-normalization}
+
+Similar to local feature normalization, for an edge $e(u, v)$, we \emph{locally} normalize its edge weight by the sum of edge weights of all incoming edges of node $v$: 
+
+\begin{equation}
+    \label{eq:local-weight-normalization}
+    W_e = W_e/\sum_{e' \in IncomingEdge(v)} W_{e'},
+\end{equation}
+%where $IncomingEdge(v)$ represents the set of incoming edges of $v$.
+
+After normalization, the weights of all event edges are in range $[0, 1]$ and the sum of weights of all incoming edges of any node is equal to 1 (except for nodes that have no parents). This completes the Phase II by producing a weighted dependency graph with discriminative weights to distinguish critical edges from non-critical edges, which is amenable to the next attack investigation phase.
+
+\input{ReputationPropagation.tex}

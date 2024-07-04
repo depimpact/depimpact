@@ -1,0 +1,66 @@
+
+%\input{tables/uniformLibraryReputation.tex}
+\input{tables/2021usenix/performance}
+\input{tables/2021usenix/rq3}
+
+
+\subsection{RQ3: Revealing Attack Entries}
+\label{subsec:rq3}
+
+% The evaluation results in \cref{subsec:rq2} show that ranking attack entries at the top is critical for \tool to achieve good performance (\ie using fewer entry nodes to cover all attack entries).
+In this RQ, we aim to measure the effectiveness of \tool in revealing attack entries (\ie whether the attack entries are among the top-ranked entry nodes).
+Specifically, we compare \tool with 4 baseline approaches: the uniform random approach, 2 simplified versions of \tool: \tool-, \tool-{}-, and the average-projection approach.
+The uniform random approach ranks all the entry nodes randomly.
+\tool- uses the temporal relevance and the data flow relevance to compute the dependency weight, but not the concentration ratio.
+\tool-{}- uses only the temporal relevance to compute dependency weights.
+The average-projection approach uses a fixed parameter vector ($0.334, 0.333, 0.333$) to compute dependency weights.
+
+% The difference between \tool and tis the parameters used to form the projection vector. 
+% For the average-projection approach, we select . %(\cref{eq:projection})
+
+
+\cref{tab:rq3} shows the average ranks of all the attack entries computed by \tool and the baseline approaches.
+We observe that \tool consistently ranks the attack entries at the top (average rank $2.41$) and achieves the best performance.
+%
+Compared with \tool-{}-, \tool-, the average-projection approach (shown in Column ``Avg. Proj.''), and the uniform random approach (shown in Column ``Rand.''), \tool achieves $79.14\%$, $70.06\%$, $69.62\%$ and $99.98\%$ improvement in ranking the attack entries.
+These results demonstrate the necessity for \tool to include all three features, 
+and the comparison with the average-projection approach demonstrates the superiority of our discriminative feature projection scheme over a fixed parameter vector.
+
+
+% the average-projection approach for computing the dependency weights. 
+% These results demonstrate that \tool can effectively reveal attack entries by combining the features mentioned in \cref{subsec:phase2}. 
+
+\eat{
+versions, which only use feature temporal relevance or temporal relevance plus data flow relevance. 
+Column \emph{DEP-} shows the ranking result for only using temporal relevance. Column \emph{DEP+} shows the ranking result for using temporal relevance and data flow relevance.
+We also compare \tool with another weight-computation approach (average-projection) and the random selection. 
+The difference between \tool and the average-projection approach is the parameter used to normalize the purposed features to the projection vector. 
+For the average-projection approach, we manually select a set of fixed parameters (0.334, 0.333, 0.333) for the projection-vector normalization. 
+Both \tool and the average-projection approach adopt the same score propagation method. 
+After the relevance propagation, we rank entry nodes based on the relevance score. 
+Ideally, the entry nodes relevant to the attack are expected to be ranked at the top. Based on the ground truth, we compute the average ranking of the attack-relevant entry nodes for these three approaches, as shown in~\cref{tab:rq3}. 
+
+\label{subsubsec:reputationeval}
+In previous evaluations, 
+we have demonstrated the effectiveness of \tool when the reputations of entry nodes are well separated. 
+Next, we would like to see how resilient \tool is when the reputation of entry nodes is mutated intentionally by attackers or unintentionally by mistake. 
+Thus, we run the experiments on all the cases under two new reputation schemes:
+(1) \textbf{Uniform Library}: assigning the reputation of a library node using a uniform random value in $\lbrack 0.2, 0.8\rbrack$, \ie making some of them malicious and some of them benign,
+and keeping other nodes unchanged;
+(2) \textbf{Uniform All}: besides shuffling the reputation uniformly for libraries, assigning the reputation of a trusted source using a uniform random value in $\lbrack 0.8, 1.0\rbrack$, and using $\lbrack 0.0, 0.2\rbrack$ for a untrusted source, respectively.
+
+\cref{tab:diffSeedReputation} shows the results of the two schemes.
+Note that to easily compute the average, for the real attack cases (marked with $*$), we convert the POI reputation $p$ to $1 - p$, so it will be shown as close to 1 when it is actually close to 0.
+As we can see, in the Uniform Library scheme, for all cases, the POI reputation is close to $1.0$, indicating that even with the noise introduced in the libraries, the edge weights of \tool prevents the adverse impact on the POI reputation. 
+In the Uniform All scheme, the POI reputations of some cases have obvious changes (\eg mal\_script, python\_wget, shell\_wget \textit{etc.}). 
+Column \textit{Avg. Non-Lib} shows the average reputation of non-lib entry nodes representing trusted or suspicious sources. The Pearson correlation between the reputations of the POI and the non-lib entry nodes is $0.885$, indicating a strong correlation.
+
+These results indicate that \tool is resilient to mutations on the library reputation and the POI reputation is strongly correlated with non-lib entry nodes.
+In real world scenarios,
+it will be relatively easy for the attacker to perturb the reputation for libraries given the massive number of libraries to keep track of. 
+Also, since there are a few non-lib entry nodes in each attack and security analysts will be asked to inspect them, it will be more difficult for the attacker to mutate the reputation without being noticed.
+If the attacker succeeds in tricking the security analysts in trusting a suspicious source, the security analyst will misclassify the attack since in the end the security analyst will determine whether it forms an attack based on the source,
+no matter \tool is used or not.
+}
+
+

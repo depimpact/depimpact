@@ -1,0 +1,22 @@
+\begin{algorithm}[t]
+    \KwIn{Weighted dependency graph, $G$ \newline threshold, $\delta$}
+    \KwOut{Weighted dependency graph, $G$; nodes are associated with dependency impact scores}
+    $POI.score \leftarrow 1$\\
+    \While{$diff > \delta$}{
+        $diff \leftarrow 0$\\
+        \For{$\forall u \in G$}{
+            \eIf{$u \ is \ POI $}{
+                \Continue
+            }{
+            $res \leftarrow 0$\\
+            \For{$\forall v \in G.childNodes(u)$}{
+                $res \mathrel{+}= v.score * G.edge(u, v).weight$\\
+            }
+            $diff  \mathrel{+}= |u.score - res|$ \\
+            $u.score \leftarrow res$ \\
+            }
+        }
+    }
+    \caption{Dependency Impact Propagation}
+    \label{alg:relevance-propagation}
+\end{algorithm}

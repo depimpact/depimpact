@@ -1,0 +1,46 @@
+\section{Evaluation}
+\subsection{Evaluation Setup}
+The evaluations are conducted on a laptop with an Intel(R) Core(R) i5-3210M CPU (2.5GHz), 8GB RAM running 64bit Ubuntu 18.04.1.
+%We use Sysdig as system auditing tool, the version is 0.24.1. 
+We constructed 11 cases for key system interfaces that are vulnerable for attacks and 10 cases for key steps in real APT attacks.
+We evaluate the effectiveness of \tool in surfacing critical edges and propagating reputation from seeds to identify benign and malicious payloads.
+
+% \subsection{Evaluation Results}
+% To evaluate the accuracy and effect of our method, we prepared 20 cases. There are 10 cases covering the most common user activities including file read/write, network download and decompress. Table~\ref{tab:benignHighRP} shows the reputation result of four methods.
+% Table~\ref{tab:Reduction} shows our method reduction rate.
+
+\subsection{Evaluation Cases Construction}
+\label{subsec:cases}
+
+
+\subsubsection{Representative Cases for Key System Interfaces}
+\label{subsub:benign-cases}
+We constructed 11 representative cases that employ the common system interfaces that vulnerable for attacks~\cite{securitybook}.
+
+
+\begin{itemize}[noitemsep, topsep=1pt, partopsep=1pt, listparindent=\parindent, leftmargin=*]
+\item File merge: \emph{2File}, \emph{3File}, \emph{USB-merge} (files stored in a USB drive)
+
+\item Invoke shell script: \emph{shell-script} (list all files in the Home folder and write the results to a file)
+
+\item File download: \emph{curl}, \emph{wget}, \emph{shell-wget} (wget called by a shell script), \emph{python-wget} (wget called by a Python script)
+
+\item File download then decompress: \emph{shell-wget-unzip}, \emph{python-wget-unzip}
+
+\item File transfer: \emph{scp}
+\end{itemize}
+
+
+\input{attacks.tex}
+
+
+
+\subsection{Evaluation Results}
+\label{subsec:eval-results}
+
+\input{reduction-results.tex}
+
+
+\input{reputation-results.tex}
+
+

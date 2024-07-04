@@ -1,0 +1,62 @@
+\section{Discussion}
+\label{sec:discussion}
+
+\myparatight{Evasion Attacks}
+Existing causality analysis techniques, such as NoDoze~\cite{hassan2019nodoze}, leverage execution profiles and reputations of entities (\eg IP and file reputations) to identify anomaly edges.
+As shown in \cref{subsec:rq1}, attackers may hide their attack steps in benign events or try to abuse the reputation system to conceal their attack steps.
+Unlike existing techniques, \tool will not suffer from this type of attacks since \tool does not rely on execution profiles and reputations of system entities.
+To abuse our weight computation and back-propagation techniques, attackers may perform multiple writes to inject the complete payload into a file, with most of the writes behaving like normal behaviors. 
+To mitigate such attacks, we may treat each of the write event as a POI event, apply \tool on all the write events to the malicious file that contains the payload, and investigates all the generated graphs. 
+We may also adopt process-based anomaly detection techniques~\cite{processanomaly,processanomaly2} to help distinguish these malicious writes.
+
+
+
+\myparatight{Forensics of Real-World Attacks}
+Advanced Persistent Threat (APT) and other real-world attacks are sophisticated (multi-step attacks that exploit various vulnerabilities) and stealthy (staying dormant for long period). 
+Due to the advances of log compression techniques~\cite{reduction, reduction2, reduction3, michael2020forensic} and continuing decreases of storage costs, storing system audit logs for months even years becomes affordable. 
+Furthermore, recent distributed database solutions~\cite{cassandra,hbase} show promising results to improve the analysis performance of the logs.
+By operating together with these solutions, \tool can be efficiently applied to long-period log data to investigate the potential attacks.
+\tool can be seamlessly integrated with threat detection techniques~\cite{han2020unicorn,netwrix,tds1,intrusionbook} to automatically generate critical components for the reported alerts (\ie the POI events), and security analysts can inspect the small graphs (\ie critical components) to obtain the contextual information for handling the alerts. 
+
+
+\myparatight{Design Alternatives}
+\tool is a general framework that can use different combinations of features to investigate different types of attacks.
+Our evaluations on a wide range of attack scenarios (\cref{subsec:evalsetup}) demonstrate the effectiveness and robustness of the chosen features.
+Besides the proposed features, \tool supports easy incorporation of other features according to specific forensic investigation needs.
+For edge weight computation, one alternative is to train a binary classifier using the features and output a probability score as the edge weight.
+However, such supervised learning-based approach faces significant limitations in our problem context:
+(1) as some of our features are computed with respect to the specific POI, the classification model learned for one type of attack can hardly generalize to other types of attacks with different POIs;
+(2) such approach typically requires large amount of training data, while our problem context is highly imbalanced in which critical edges are limited. 
+%
+Among unsupervised learning-based approaches, approaches based on anomaly detection~\cite{anomalysurvey} could be a substitution for KMeans clustering, and there could be alternatives for LDA to achieve discriminative dimensionality reduction~\cite{Mika99fisherdiscriminant,sugiyama2006local}.
+% We plan to explore these options in future work.
+
+%\pgao{maybe talk about local clustering approach}
+
+
+\myparatight{Runtime Performance Improvement}
+The performance of \tool may benefit from database optimization and parallelization. 
+Causality analyses can be improved by adopting the database optimization and parallelization techniques to speed up the search~\cite{gao2018aiql,gao2018saql}.
+Feature extraction for different edges is independent and can also be parallelized.
+%In the scenarios where multiple hosts are involved, dependencies on each host can be precomputed in parallel and thus cross-host causality analysis becomes the concatenation of multiple generated dependency graphs. 
+Back-propagation (\cref{eq:reputation}) can be converted into a matrix-vector product form to save CPU cycles.
+Further parallelization is possible by leveraging ideas similar to parallelizing PageRank~\cite{gleich2004fast,kohlschutter2006efficient}. 
+% We plan to explore these ideas in future work.
+
+
+\myparatight{Limitations}
+To investigate attacks, \tool depends on the underlying detection systems to identify the POI events that are related to the attacks.
+If the underlying detection systems fail to do so, \tool will not be able to investigate the attacks. 
+Recent approaches~\cite{han2020unicorn,processanomaly2} have proposed solutions to improve the detection of abnormal system activities and \tool can work with these approaches to provide better defenses. 
+Moreover, the critical components produced by \tool still have $200+$ edges on average (\ie \cref{tab:rq1}) due to the irrelevant system activities performed by the processes that produce critical edges. 
+We plan to explore how to incorporate expert knowledge~\cite{aptrace} and cyber threat intelligence (CTI)~\cite{gao2021system} to filter out these non-critical edges.
+Finally, \tool cannot be used for real-time analysis as dependency graph generation is costly under some scenarios even when advanced data compression and parallel computation are applied~\cite{reduction,reduction2,reduction3}. 
+We plan to explore options that can provide quicker feedback such as progressive updates~\cite{aptrace,prosql}.
+
+
+
+
+
+
+
+

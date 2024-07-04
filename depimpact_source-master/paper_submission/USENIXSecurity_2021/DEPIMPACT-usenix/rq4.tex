@@ -1,0 +1,49 @@
+%\input{tables/runtime.tex}
+
+
+\eat{
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=0.48\textwidth]{figs/s&p/rq4.pdf}
+    \caption{Runtime performance of \tool and NoDoze}
+    \label{fig:rq4compare}
+\end{figure}
+}
+
+\subsection{RQ4: System Performance}
+
+To understand the performance of \tool, we measure the execution time of each step in \tool, as shown in \cref{tab:rq4performance}.
+On average, \tool takes $343.84s$ to finish
+%the processing and computation for one 
+analyzing an attack (\ie weight computation and impact propagation), and dependency graph construction (\ie Causality Analysis) requires $58.96s$ and edge merge requires $6.87s$.
+%
+We compare \tool with the average-projection approach for dependency weight computation and dependency impact propagation, since they share the same steps for causality analysis and edge merge. 
+From \cref{tab:rq4performance}, we observe that 
+(1) \tool takes more time for dependency weight computation ($\sim120s$) because \tool uses the Multi-KMeans++ clustering and LDA to find the optimal projection vector;
+(2) \tool takes less time for dependency impact propagation. The reason is because the dependency weights computed by \tool are much more discriminative, and hence the score propagation can converge faster.
+%but the shorter time for the average-projection approach in dependency weight computation is offsetted by the time needed for score propagation. 
+As a result, \tool reduces the execution time by $71.94\%$ when compared with the average-projection approach. 
+
+We also compare the execution time of \tool (dependency weight computation plus dependency impact propagation) with the execution time of NoDoze (anomaly score computation), since they share the same causality analysis and edge merge steps. We only compare the different parts: weight computation and impact propagation.
+From \cref{tab:rq4performance}, we can see \tool need $343.84s$ to finish the weight computation and impact propagation, NoDoze need $144.15s$ to finish the s anomaly score computation.
+%
+In particular, while \tool requires more time for processing the 2 attacks whose dependency graphs have more than 3 million edges (\ie the ``Hide File'' attack and the ``Steal information'' attack), \tool produces much smaller graphs ($\sim800$ edges) than NoDoze ($>20,000$ edges).
+On average, \tool needs $343.84$s to finish the dependency weight computation and the dependency impact propagation, and NoDoze needs $144.15$s to finish the anomaly score computation ($409.67s$ v.s. $209.98s$ for the whole analysis).
+%
+Thus, \tool and NoDoze have similar runtime performance for most of the attacks, and NoDoze is more efficient for certain attacks but achieves much lower graph reduction. 
+
+
+
+\eat{
+Also, the results in \cref{subsec:rq3} show that \tool achieves better ranking for the attack entries than the average-projection approach, and we want to know whether it is at the cost of more computation efforts.
+The results are shown in \cref{tab:rq4performance}.
+
+
+
+To understand the performance of \tool in investigating real attacks, we measure the execution time of \tool on the attack cases.
+\tool starts the computation by parsing a log ($92.252s$ averagely) and building a global graph representation ($3.277s$ averagely).
+\cref{tab:runtime} shows the execution time for the remaining components of \tool. 
+Besides the steps shown in the preprocessing step, \emph{Causality Analysis}, \emph{Edge Merge}, and \emph{Node split} require $0.21s$, $0.06s$, and $0.003$ on average. 
+Note that \emph{Weight Computation} and \emph{Reputation Propagation} only requires $0.25s$ and $0.01s$ on average.
+In summary, the total time for running an analysis is about $2$ minutes, but the major cost (\ie log parsing) can be improved by adopting caching or database indexing~\cite{gao2018aiql}.
+}

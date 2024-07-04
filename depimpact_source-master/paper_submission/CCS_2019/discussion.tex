@@ -1,0 +1,72 @@
+\section{Discussion}
+
+%\pgao{Talk about level of automation; state that \tool is not fully automated}
+
+
+\subsection{Weight Computation}
+% Accurately computing the edge weights to distinguish critical edges from non-critical edges is the key pre-requisite for achieving good graph reduction performance (surfacing critical edges from non-critical edges) and good reputation propagation performance (identifying benign and malicious payloads by propagating reputation from seeds). 
+
+\eat{
+One approach to compute a weight score is to adopt a classification-based approach to train a binary classifier using the three features and output a probability score.
+Though this approach has demonstrated its applicability for several domains~\cite{gao2018sybilfuse,wang2018graph}, it faces significant limitations in our problem context.
+To achieve high classification accuracy, supervised learning-based approaches often require large amount of training data and the training data and the test data come from the same distribution~\cite{mlbook,friedman2001elements}.
+However, in our context, features are extracted with respect to the specific POI event, and thus the model learned for one type of attack with a specific POI can hardly generalize to other types of attacks with different POIs. 
+The highly imbalanced classes (\ie the very few number of critical edges as compared to non-critical edges) further impedes the model generalization.
+}
+\eat{As mentioned in \cref{subsec:weight-computation}, classification-based approaches have very limited generalization capability due to the lack of enough training samples and the highly specialized context introduced by the POI event.
+}
+
+As shown in \cref{subsec:reputation-results}, \tool achieves the best performance in all the compared weight computation approaches.
+%, especially much better than empirically setting a fixed projection vector. 
+One alternative for weight computation is to train a binary classifier using the three features and output a probability score as the edge weight. However, these classification-based approaches have very limited generalization capability in our problem context as our features are computed with respect to the specific POI, and thus the model learned for one type of attack can hardly generalize to other types of attacks with different POIs. Furthermore, these approaches require large amount of training data~\cite{mlbook,friedman2001elements}, while in our problem context critical edges (\ie positive examples) are limited.
+
+Among unsupervised learning approaches, approaches based on anomaly detection~\cite{anomalysurvey} might be a substitution for KMeans.
+In order to compute the best projection vector, we extend the standard LDA from several aspects including handling the singular within-group scatter matrix $S_w$, negating the projection vector by condition to ensure critical edges have higher projected weights than non-critical edges, and scaling the projected weights to a positive range.
+%
+We acknowledge that there might be other ways to extend the standard LDA and other methods to achieve discriminative dimensionality reduction~\cite{Mika99fisherdiscriminant,sugiyama2006local}, which we leave for future exploration.
+
+
+\eat{
+\subsection{Parallelization}
+Part of the construction of weighted dependency graph can be potentially parallelized with distributed computing. 
+The dependency graph produced by traditional causality analysis~\cite{backtracking,backtracking2} can be parallelized by
+searching the dependency separately.
+The feature extraction for each edge is independent and 
+can be parallelized.
+%is a good candidate for parallelization.
+In the scenarios where multiple hosts are involved, dependencies on each host can be precomputed in parallel and thus cross-host causality analysis becomes the concatenation of multiple generated dependency graphs. 
+The weight computation can be parallelized by processing the set of incoming edges of each node separately.
+However, the reputation propagation cannot be easily separated into independent components for parallel processing
+(though, we can convert \cref{eq:reputation} into a matrix-vector product form to save CPU cycles), due to the dependencies on the computation results, 
+and the massive dependencies among system events also pose significant challenges for parallelization.
+Weighted causality analysis with parallelization is an interesting research direction that requires non-trivial efforts.}
+
+
+\subsection{Attacks Against the Reputation System}
+In practice, the attacker, with some knowledge about the proposed system, may optimize its attack strategy to stay under cover. For instance, (1) to have a lower time weight, the attacker may inject its malicious files earlier but start its attack later, or (2) to have a lower data weight, the attacker may perform the attack using multiple processes and each process is only associated with small data amount.
+As \tool's edge weights considers three features instead of one, both of these situations can be mitigated unless the attacker has the full knowledge of all the other edges and make all the features similar to them.
+%(\ie the attacker distributes the malicious behavior to multiple processes). 
+An attacker may also choose to gain reputation first before attacking the system or stay under cover and attack probabilistically. 
+To mitigate such situation, when assigning reputation, advanced analysis techniques~\cite{driller,binverify} on binaries and libraries can be applied to detect missing vulnerabilities.
+
+
+
+
+
+\eat{
+\subsection{Industrial View}
+Because APT attacks consist of many small steps over a long period of time, even though security experts can obtain the system-wide log, it is time-consuming to manually inspect the daunting number of edges in the system dependency graph, and thus it is hard to discover the complete attack steps and reconstruct the attack sequence.
+Moreover, depending on the individual's capability, the quality of the analysis may vary a lot. 
+By enabling automatic investigation, \tool not only reduces the time consumption of the analysis but also mitigates the dependency on the capability of the security analysts.
+This makes \tool highly applicable to small-scale businesses that are not affordable to hire a large team of security analysts to conduct labor-intensive investigation. 
+%The automated process is vital to keep the security level as high as possible. 
+% In places where there are multiple servers, such as a large-scale business, this work can guarantee a level of security through automation and help security experts to respond promptly. The prompt response will help to reduce the financial damage when a security incident happens.
+}
+
+
+
+\eat{
+\tool can be used not only for the post-mortem analysis but also for capturing symptoms before the security incident. According to a recent malware report ~\cite{McAfeeLabs:2018report}, fileless malware such as PowerShell attack is surging 432\% in 2017. The fileless malware does not leave any files in the system so the anti-malware solution is experiencing difficulties.
+System-wide logging can capture the activities of the process by observing the reputation of connected IP address periodically, \tool can give an early warning to the user before or during the attack on the fly.
+}
+

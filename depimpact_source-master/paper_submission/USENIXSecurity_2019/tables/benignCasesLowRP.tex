@@ -1,0 +1,20 @@
+\begin{table}[!tb]
+        \centering
+        \caption{POI reputations of malicious payloads through key system interfaces (expected: $0.0$)}
+        \label{tab:benignLowRP}
+        \resizebox{0.48\textwidth}{!}{%
+            \begin{tabular}{|l|r|r|r|r|r|}
+           \hline
+            \multicolumn{1}{|c|}{\textbf{Attack/Task}} & \multicolumn{1}{c|}{\textbf{\lpfixed}} & \multicolumn{1}{c|}{\textbf{PrioTracker}} & \multicolumn{1}{c|}{\textbf{\lpglobal}} & \multicolumn{1}{c|}{\textbf{\lpglobalplus}} & \multicolumn{1}{c|}{\textbf{\tool}} \\ \hline
+            3File                               & 0.15                                   & 0.50                                 & 0.49                                   & 0.02                                             & $\sim$0.00                                  \\ \hline
+            2File                               & 0.20                                   & 0.50                                 & 0.50                                   & 0.50                                             & $\sim$0.00                                  \\ \hline
+            curl                                & 0.30                                   & 0.40                                 & 0.49                                   & 0.49                                             & 0.01                                  \\ \hline
+            shell\_script                       & 0.38                                   & 0.50                                 & 0.50                                   & 0.50                                             & 0.04                                  \\ \hline
+            python\_wget                        & 0.29                                   & 0.35                                 & 0.39                                   & 0.37                                             & 0.01                                  \\ \hline
+            scp                                 & 0.26                                   & $\sim$0.00                                 & 0.07                                   & 0.08                                             & $\sim$0.00                                  \\ \hline
+            shell\_wget                         & 0.20                                   & 0.25                                 & 0.18                                   & 0.11                                             & 0.02                                  \\ \hline
+            wget                                & 0.21                                   & 0.46                                 & 0.50                                   & 0.50                                             & $\sim$0.00                                  \\ \hline
+            \textbf{avg}                                 & 0.25                                   & 0.37                                 & 0.39                                   & 0.32                                             & 0.01                                  \\ \hline
+            \end{tabular}
+        }
+\end{table}

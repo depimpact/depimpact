@@ -1,0 +1,44 @@
+\subsubsection{Multi-Step Intrusive Attacks}
+\label{subsubsec:attack-cases}
+
+These 3 multi-step intrusive attacks capture the important traits of attacks depicted in the Cyber Kill Chain framework~\cite{cyberkillchain} and CVE~\cite{cve}. 
+Note that some steps of these attacks may not be fully captured by system auditing (\eg user inputs and inter-process communications).
+Such limitations can be addressed by employing more powerful auditing tools, which is
+%out of the scope of
+orthogonal this paper.
+
+\myparatight{Attack 1: Password Cracking After Shellshock Penetration}
+% Once breaks into the system, the attacker can launch different malicious
+% behaviors (\eg password cracking, information leakage, denial of services). 
+After the initial shellshock penetration, the attacker first connects to Cloud services (\eg Dropbox, Twitter) and downloads an image where C2 (Command and Control) host's IP address is encoded in the EXIF metadata. The behavior is a common practice shared by APT attacks~\cite{hammertoss,vpnfilter} to evade the network-based detection system based on DNS blacklisting.
+
+Using the IP, the malware connects to the C2 host. 
+The C2 host directs the malware to take some lateral movements, including a series of stealthy reconnaissance maneuvers. 
+In this stage, the attacker generally takes a number of actions. 
+Among those, we emulate the password cracking attack. 
+The attacker downloads password cracker payload  and runs it against password shadow files.
+
+\myparatight{Attack 2: Data Leakage After Shellshock Penetration}
+After lateral movements, the attacker attempts to steal the valuable assets from the host. 
+This stage mainly involves the behaviors of local and remote file system scanning activities, copying and compressing of important files, and transferring the files to its C2 host.
+The attacker scans the file system, scrap files into a single compress file and transfer it back to C2 host.
+
+\eat{
+\myparatight{Attack 4: Command-line Injection with Input Sanitization Failures}
+Different from the previous shellshock case, a program may contain vulnerabilities introduced by developer errors and this can also be a initial attack vector that invites the attacker into their target systems. To represent
+such cases, we wrote an web application prototype that fails to sanitize inputs for a certain web request, hence allows Command line Injection attack. 
+Our prototype service mimics the Jeep-Cherokee attack case~\cite{miller:remote:2015} which implements a remote access using the conventional web service API that
+internally uses DBUS service to run the designated commands. 
+Due to the developers' mistake, the web service fails to sanitize the remote inputs, the attacker can append arbitrary commands followed by semi-colon({\tt;}). 
+Leveraging this vulnerability, we can download backdoor program (\emph{commend-injection-c1}) and collect sensitive data (\emph{command-injection-c2}).
+}
+
+\myparatight{Attack 3: VPN Filter}
+We prototyped a famous IoT attack campaign: VPN Filter malware~\cite{vpnfilterschenier}, which infected millions of IoT devices by exploiting a number of known or zero-day vulnerabilities~\cite{vpnfilter1,vpnfilter2}. 
+The attack's significance lies in how the malware operates during its lateral movement stage following its initial penetration. 
+The campaign employs up-to-date hacker practices to bypass conventional security solutions based on static blacklisting approaches and has an architecture to download the plug-in payload on-demand at run-time. 
+We prototyped the malware by referring to one of its sample for x86 architecture~\cite{vpnfilterx86}.
+
+The VPN Filter stage 1 malware accesses a public image repository to get an image. In the EXIF metadata of the image, it contains the IP address for the stage 2 host. It downloads the VPN Filter stage2 from the stage2 server, and executes it to launch the attack.
+
+

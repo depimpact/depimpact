@@ -1,0 +1,10 @@
+\section{Conclusion}
+We propose a novel approach, \tool, that constructs a dependency graph from a POI and identifies the critical component of the dependency graph, which filters out less-important dependencies introduced by irrelevant system activities.
+Specifically, \tool assigns discriminative weights to dependencies for distinguishing POI-related dependencies from less-important dependencies, 
+and computes relevance scores for each node based on the dependency weights to rank the sources (\ie entry nodes).
+By further performing forward causality analysis from the top-ranked sources, \tool preserves only dependencies that are highly relevant to POI and top-ranked sources.
+Our evaluations on real attack cases demonstrate the effectiveness of \tool in filtering out irrelevant dependencies (achieving $96\%$ reduction rate) and preserving attack-relevant information.
+%($\sim8\%$ loss of dependencies).
+
+
+

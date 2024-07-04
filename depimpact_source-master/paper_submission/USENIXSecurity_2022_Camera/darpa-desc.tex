@@ -1,0 +1,8 @@
+\subsubsection{DARPA TC Attack Cases}
+The dataset released by the DARPA TC program contains attack cases performed on different operating systems.
+Based on the attack descriptions provided in the dataset, we excluded the attack cases that fail to launch the attacks, and the attack cases on the Android system since mobile applications' behaviors are constrained by the Android sandbox and are not suitable for our analysis.
+We also excluded the phishing e-mail attacks since most of their operations are through clicking links in the browsers and leave limited traces in the system audit logs.
+In total, we chose five attacks that target different operating systems (Linux, Windows) and exploit different vulnerabilities (Firefox backdoor and browser extensions).
+These attack cases span multiple days (\eg Theia data contains logs for 8 days).
+
+% Once we got the dependency graph of the malicious behavior, we used \tool to further process and detect the critical component of each attack.

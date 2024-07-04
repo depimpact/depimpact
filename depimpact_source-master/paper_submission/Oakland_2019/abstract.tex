@@ -1,0 +1,8 @@
+\begin{abstract}
+Causality analysis is an important solution for attack investigation, which analyzes the system auditing events about system calls and presents the dependencies among system auditing events as a dependency graph, with nodes being system entities (\eg files and network sockets) and edges being dependencies (\eg file read/write).
+Such a tool is especially prominent for investigating Advanced Persistent Threat (APT) attacks that are usually conducted in multiple stages by exploiting various vulnerabilities. 
+However, causality analysis suffers from dependency explosion and requires non-trivial manual efforts to inspect the dependency graph for surfacing attack provenance.
+We propose a weighted causality analysis approach, \tool, which (i) assigns weights to the dependencies to distinguish critical dependencies and non-critical dependencies,
+and (ii) propagates reputation values from chosen seed nodes to suspicious nodes to automate the process of graph inspection.
+The evaluations on a wide range of cases for key system interfaces and real APT attacks demonstrate the effectiveness of \tool in graph reduction based on computed weights and automated graph inspection based on reputation propagation. 
+\end{abstract}

@@ -1,0 +1,33 @@
+\begin{table}[]
+\centering
+        \caption{Filtering Results}
+        \label{tab:filter}
+        \resizebox{0.45\textwidth}{!}{%
+            \begin{tabular}{|l|r|r|r|}
+            \hline
+            \thead{Attacks} & \thead{\#Critical Edges} & \thead{Missing Point} & \thead{\#Non-critical Edges at Missing Point}\\\hline
+            2File                     & 3                        & 9.49          & 0                                     \\\hline
+            3File                     & 4                        & 6.49          & 0                                     \\\hline
+            Python-wget               & 4                        & 5.19          & 1                                     \\\hline
+            Python-wget-unzip         & 8                        & $<0.01$          & 60                                    \\\hline
+            Shell-script              & 4                        & 3.15          & 1                                     \\\hline
+            Shell-wget                & 4                        & 0.04          & 6                                     \\\hline
+            Shell-wget-unzip          & 6                        & 2.83          & 3                                     \\\hline
+            USB-merge                 & 6                        & 2.11          & 0                                     \\\hline
+            curl                      & 4                        & 12.80         & 1                                     \\\hline
+            scp                       & 3                        & 8.29          & 4                                     \\\hline
+            wget                      & 2                        & 6.20          & 29                                    \\\hline
+            command-injection-c1 & 2                        & 17.00         & 49                                    \\\hline
+            command-injection-c2 & 3                        & 286.50        & 0                                     \\\hline
+            data-leakage             & 5                        & 302.89        & 0                                     \\\hline
+            password-crack-c1    & 2                        & 9.00          & 34                                    \\\hline
+            password-crack-c2    & 4                        & 14.20         & 1                                     \\\hline
+            password-crack-c3    & 4                        & $<0.01$          & 57                                    \\\hline
+            penetration-c1         & 3                        & 0.02          & 5                                     \\\hline
+            penetration-c2         & 11                       & $<0.01$          & 21                                    \\\hline
+            vpnfilter-c1          & 2                        & 4.67          & 12                                    \\\hline
+            vpnfilter-c2          & 3                        & 3.60          & 15                                   \\\hline 
+            \thead{average}    & 4                        & 32.92          &14.24 \\\hline
+            \end{tabular}
+        }
+\end{table}

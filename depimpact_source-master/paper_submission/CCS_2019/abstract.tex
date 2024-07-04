@@ -1,0 +1,57 @@
+\begin{abstract}
+
+The need for countering Advanced Persistent Threat (APT) attacks has led to solutions that ubiquitously
+monitor system activities in each host, and perform timely attack investigation over the monitoring data.
+However, existing solutions require non-trivial efforts of manual inspection, which are labor-intensive and lack of automation.
+%and error-prone.
+%and thus facing significant limitations in automating the investigation process.
+\eat{
+However, existing solutions require non-trivial efforts of the security analyst to manually conduct the attack investigation, and thus these approaches face major limitations in automating the investigation process:
+(1) causality analysis approaches require that the security analyst manually inspects a huge system dependency graph, 
+where nodes represent system entities and edges represent the dependencies among system entities;
+%auditing events;
+(2) behavior querying approaches require that the security analyst 
+%master the query syntax and 
+manually constructs behavior queries to search for attack patterns and manually inspects the potentially large query results.
+}
+%
+To bridge the gap,
+%In this work, we aim to bridge the gap between the pressing need for automating the attack investigation process and the lack of practical solutions.
+%effective and efficient solutions for such purpose.
+we propose \tool, a novel approach that facilitates automatic attack investigation via weight-aware reputation propagation from system monitoring.
+%
+%\tool is based on the key insight that proactively reveals critical edges from non-critical edges and associates critical edges with POI entities for POI diagnosis.
+%
+Given a POI
+%(point-of-interest)
+%entity/event 
+to be investigated, \tool 
+(1) applies causality analysis to construct a system dependency graph for the POI and identify a set of entry nodes, 
+(2) adopts novel methods to compute discriminative weights for edges in the dependency graph, so that critical edges that are important to revealing the attack sequence are easily revealed from non-critical edges, and (3) adopts a novel weight-aware reputation propagation scheme to propagate the reputation from 
+%seed sources
+entry nodes (nodes 
+%on the dependency graph 
+without incoming edges) to the POI along the weighted edges.
+%
+The 
+%inferred 
+POI reputation can be used to identify the root cause nodes among other entry nodes that result in the POI, and determine the trustworthiness/suspiciousness of the POI. 
+The discriminative edge weights can be used to reveal critical edges and reconstruct the attack sequence, which details how the POI was created.
+\eat{
+%nodes 
+%of the POI and determine whether the POI originated from trusted sources or untrusted sources.
+The discriminative edge weights can be used to surface the critical edges and then reconstruct the attack sequence, which details how the attack was performed.
+%which details how the attack starting from the entry points eventually affects the POI.
+}
+Synergistically, \tool significantly reduces the 
+%extensive 
+efforts of manual inspection and facilitates automatic investigation.
+The evaluation on a wide range of 
+%attacks on key system interfaces and real
+attacks demonstrates the practical efficacy of \tool.
+%in automating the attack investigation process.
+
+
+
+
+\end{abstract}

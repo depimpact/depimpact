@@ -1,0 +1,34 @@
+\begin{table*}[htb]
+	\centering
+	\caption{Graph Reduction Result}
+	\label{tab:Reduction}
+	\resizebox{0.9\textwidth}{!}{%
+        \begin{tabular}{|l|r|r|r|r|r|r|r|r|r|r|}
+            \hline
+            \thead{Case} &\thead{\#N(Original)}&\thead{\#E(Original)}&\thead{\#N(Causality)}&\thead{\#E(Causality)}& \thead{\#N(Merge)}& \thead{\#E(Merge)} & \thead{Node Ratio(\%)}& \thead{Node Reduction(\%)}& \thead{Edge Ratio(\%)} & \thead{Edge Reduction(\%)} \\ \hline
+            2File                   &                  75 &             2149 &                   39 &              1900 &             39 &          38 &        52.00 &            48.00 &       1.77 &          98.23 \\\hline
+            3File                   &                  78 &             3131 &                   40 &              2815 &             40 &          39 &        51.28 &            48.72 &       1.25 &          98.75 \\\hline
+            Python-wget             &                1210 &             9154 &                   73 &              3265 &             73 &          82 &         6.03 &            93.97 &       0.90 &          99.10 \\\hline
+            Python-wget-unzip       &                 154 &             7958 &                   86 &              7211 &             86 &         101 &        55.84 &            44.16 &       1.27 &          98.73 \\\hline
+            Shell-script            &                  38 &              527 &                   19 &                42 &             19 &          22 &        50.00 &            50.00 &       4.17 &          95.83 \\\hline
+            Shell-wget              &                1161 &             9001 &                   31 &              2685 &             31 &          37 &         2.67 &            97.33 &       0.41 &          99.59 \\\hline
+            Shell-wget-unzip        &                  93 &             8506 &                   41 &              7705 &             41 &          51 &        44.09 &            55.91 &       0.60 &          99.40 \\\hline
+            USB-merge               &                  58 &             5916 &                    8 &              4420 &              8 &          12 &        13.79 &            86.21 &       0.20 &          99.80 \\\hline
+            curl                    &                 126 &             3108 &                   61 &              1681 &             61 &          64 &        48.41 &            51.59 &       2.06 &          97.94 \\\hline
+            scp                     &                 454 &             3711 &                   58 &               109 &             58 &          74 &        12.78 &            87.22 &       1.99 &          98.01 \\\hline
+            wget                    &                  66 &             2457 &                   28 &              2062 &             28 &          30 &        42.42 &            57.58 &       1.22 &          98.78 \\\hline
+            command-injection-c1 &                1702 &             6173 &                   51 &                65 &             51 &          51 &         3.00 &            97.00 &       0.83 &          99.17 \\\hline
+            command-injection-c2 &                1702 &             6173 &                 1164 &              3417 &           1164 &        1165 &        68.39 &            31.61 &      18.87 &          81.13 \\\hline
+            data-leakage            &                2303 &            76478 &                 1809 &             59178 &           1809 &        1818 &        78.55 &            21.45 &       2.38 &          97.62 \\\hline
+            password-crack-c1    &                 898 &            44026 &                   35 &               741 &             35 &          36 &         3.90 &            96.10 &       0.08 &          99.92 \\\hline
+            password-crack-c2    &                 898 &            44026 &                   60 &             15968 &             60 &          71 &         6.68 &            93.32 &       0.16 &          99.84 \\\hline
+            password-crack-c3    &                 898 &            44026 &                   47 &              1055 &             47 &          72 &         5.23 &            94.77 &       0.16 &          99.84 \\\hline
+            penetration-c1        &                 375 &             1807 &                   58 &               319 &             58 &          59 &        15.47 &            84.53 &       3.27 &          96.73 \\\hline
+            penetration-c2        &                 375 &             1807 &                   25 &               180 &             25 &          86 &         6.67 &            93.33 &       4.76 &          95.24 \\\hline
+            vpnfilter-c1         &                 678 &             3076 &                   14 &               274 &             14 &          14 &         2.06 &            97.94 &       0.46 &          99.54 \\\hline
+            vpnfilter-c2         &                 678 &             3076 &                   16 &               604 &             16 &          18 &         2.36 &            97.64 &       0.59 &          99.41 \\\hline
+            \thead{average}                     &          667.62 &     13632.67 &           179.19 &       5509.33  &     179.19 &   187.62&     27.22 &         72.78 &  2.26 &       97.74 \\\hline
+        \end{tabular}
+    }
+    \dcaption{Graph reduction results after causality analysis and edge merge. Average node reduction (by causality analysis) is 72.78\%. Average edge reduction (by causality analysis and edge merge) is 97.74\%.}
+\end{table*}

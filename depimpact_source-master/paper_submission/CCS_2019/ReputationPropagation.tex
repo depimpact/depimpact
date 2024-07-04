@@ -1,0 +1,85 @@
+\subsection{Phase III: Attack Investigation}
+\label{subsec:attack-investigation}
+
+
+
+\myparatight{Reputation Propagation}
+To perform reputation propagation, \tool assigns initial reputations to entry nodes and propagates the reputation in an inheritance fashion.
+
+\emph{Reputation Scheme:}
+The design goal of the reputation scheme is to capture the fact that if a file (or program) is downloaded or installed from a reputable source, it should be more reliable than the file (program) downloaded from an suspicious website or from a suspicious equipment, and the reputation of files (programs) from the reliable sources should be higher than the reputation of those from untrusted sources. 
+As such, we define the reputation of a system entity to be $\lbrack0.0,1.0\rbrack$, where a file (program) originated from trusted sources should have a reputation closer to $1.0$, a file (program) originated from untrusted sources
+%suspicious sources 
+should have a reputation closer to $0.0$.
+In the design of \tool,
+the initial reputation of entry nodes is assigned by the security analyst based on the domain knowledge about the entities (as these nodes have no incoming edges for receiving reputation): high reputation for trusted sources, low reputation for untrusted sources, and neutral reputation (\ie $0.5$) for neutral sources like system libraries.
+%and the initial reputation of system libraries is set to $0.5$.
+Note that this process can be largely automated by compiling a list of verified libraries and binaries or leveraging existing reputation systems~\cite{ipreputation1,ipreputation2}.
+%Nonetheless, \tool also allows security analysts to manually set the reputation for libraries as shown in \cref{subsubsec:reputationeval}.
+
+
+\eat{
+Specifically, for each entry node that represents a process/file or an IP, the security analyst assigns the reputations based on the domain knowledge about the entities: high reputation values for trusted sources (\eg verified binaries), low reputation values for 
+%suspicious 
+untrusted sources (\eg unknown IPs and vulnerable binaries), and neutral reputation values for system libraries since they may be used by both benign and malicious applications.
+Note that this process can be largely automated by compiling a list of verified binaries and libraries or leverage existing reputation systems~\cite{ipreputation1,ipreputation2}.
+}
+
+
+\eat{
+\emph{Entry Nodes and System Libraries}.
+Entry nodes are the nodes without incoming edges in the dependency graph. 
+They are usually trusted sources such as official updates like Microsoft updater or Chrome updater (assigned high reputations), system libraries like libc (assigned neutral reputations), or suspicious sources like USB sticks or malicious websites (assigned with low reputations). For each trusted source, its initial reputation is set to $1.0$; for each suspicious source, its initial reputation is set to $0.0$. 
+Additionally, since the system libraries will be used by both legitimate users and attackers, we cannot easily infer a node's nature from its correlations with the system libraries. Thus, the initial reputations of system libraries are set to $0.5$. 
+However, \tool also allows security analysts to manually set the reputation for libraries.
+}
+
+
+
+\emph{Reputation Inheritance}.
+Based on the edge weights and the chosen seeds, we iteratively update other nodes' reputation values. 
+To prevent fast degradation of reputation values, \tool updates a node's reputation using an inheritance fashion:  
+\begin{equation}
+    \label{eq:reputation}
+     R_{v} =\sum_{e \in incomingEdge(v)} R_{sourceNode(e)}*W_e,
+\end{equation}
+where $incomingEdge(v)$ represents the set of incoming edges of $v$, $sourceNode(e)$ represents the source node of $e$, $R_{sourceNode(e)}$ represents the reputation of $sourceNode(e)$, and $W_e$ represents the weight of $e$.
+
+
+\input{ReputationPropagationPseudo.tex}
+
+\cref{alg:reputaionPropagation} gives the details of reputation propagation. 
+A node $v$ in the dependency graph receives its reputation by inheriting the weighted reputation from all of its parent nodes (Lines 7-12).
+Note that if we adopt a distribution fashion that ensures the sum of reputations for $v$'s children nodes to be equal to $v$'s reputation,
+then the reputation will degrade rapidly in a few hops, which does not work well for dependency graphs that often have many paths with many hops.
+%
+The process of inheritance-based reputation propagation is an iterative process.
+For each iteration, the algorithm computes the sum of reputation differences for all the nodes (Line 11, Line 13).
+The propagation terminates when the aggregate difference between the current iteration and the previous iteration is smaller than a threshold $\delta$ (Line 1), indicating that the reputation of all nodes becomes stable.
+Empirically, we set $\delta = 1e-13$.
+%$\delta = 1.0E-13 $.
+Note that the reputation of entry nodes remains unchanged (Lines 4-5).
+
+
+\myparatight{Attack Sequence Reconstruction}
+\tool leverages the edge weights in the dependency graph for reconstructing the attack sequence, which consists of critical edges and their nodes.
+Since the weights computed by \tool aim to maximize the difference between critical and non-critical edges, we can specify a minimum weight as a \emph{threshold} and hide the edges with weights below that threshold.
+% For example, the weights of edges from the irrelevant system activities (\eg daily tasks or file indexing) usually have lower weights than those representing the attack provenance.
+By carefully choosing this threshold, \tool can filter out these irrelevant system activities while retaining the attack provenance.
+%
+In practice, the security analyst can first hide the non-critical edges using a higher threshold to focus on the investigation of the attack, and gradually shows part of the non-critical edges by lowering the threshold to get more context of the attack-related activities.
+For example, certain system libraries may reveal the functionalities that the malicious payloads possess.  
+
+
+\eat{
+Based on our results in , choosing the threshold within $\lbrack 0.1,0.25 \rbrack$ can prune most of the non-critical edges while retain the critical edges.} 
+
+
+
+\eat{
+
+ Even after Edge Merge, there are often a large portion of relevant yet non-critical nodes and edges, such as Python run-time dependencies, dynamic linking libraries, and Linux configuration files. These elements make the graph still too messy to be interpreted by security analysts. 
+
+ Given that the weight distribution is different for each dependency graph, \tool uses a threshold value computed using $T_w * W_{avg}$, where $W_{avg}$ represents the average weights in the dependency graph.
+
+}

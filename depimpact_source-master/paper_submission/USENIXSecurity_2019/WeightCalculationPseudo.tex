@@ -1,0 +1,31 @@
+\begin{algorithm}[!t]
+    \caption{Weight Computation\label{alg:weightComputation}}
+    \SetKwFunction{CombineWeight}{CombineWeight}
+    \KwIn{Dependency Graph for the POI event: $G_d$}
+    \KwOut{Weighted Dependency Graph, $G_{wd}$}
+    
+    \For{$v \in G_d$}{
+        $Set \leftarrow G_d.incomingEdgeOf(v)$ \\
+        %$T_{total} \leftarrow \sum_{e \in Set} f_{T_{e}} $\\
+        %$D_{total} \leftarrow \sum_{e \in Set} f_{D_{e}} $\\
+        %$C_{total} \leftarrow \sum_{e \in Set} f_{C_{e}} $\\
+        %\For{$e \in Set$}{
+        %    $f_{T_{e}} \leftarrow f_{T_{e}}/T_{total}$ \\
+        %    $f_{D_{e}} \leftarrow f_{D_{e}}/D_{total}$ \\
+        %    $f_{C_{e}} \leftarrow f_{C_{e}}/C_{total}$ \\
+        %}
+        $group_1, group_2 \leftarrow \textit{\textrm{Multi-KMeans++}}(Set)$ \\
+        $(\omega^{*}_D, \omega^{*}_T, \omega^{*}_C) \leftarrow extendedLDA(group_1, group_2)$ \\
+        \For{$e \in Set$}{
+            $W_e = \omega^{*}_{D} f_{D(e)} + \omega^{*}_{T} f_{T(e)} + \omega^{*}_{C} f_{C(e)}$
+        }
+        $W' \leftarrow \sum_{e \in Set} W_{e}$  \\
+        % \For{$e \in Set$}{
+        %     $W_{total} \mathrel{+}= \CombineWeight{e}$\;
+        % }
+        \For{$e \in Set$}{
+            % $e.weight \leftarrow \CombineWeight{e}/W_{total}$ \; \\
+            $W_{e} \leftarrow W_{e}/W'$ \\
+        }
+    } 
+\end{algorithm}

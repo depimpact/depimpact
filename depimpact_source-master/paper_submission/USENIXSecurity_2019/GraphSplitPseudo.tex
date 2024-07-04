@@ -1,0 +1,40 @@
+% \begin{algorithm}
+% 	\KwIn{Dependency Graph $G_d$}
+% 	\KwOut{Simple Directed Graph $G_d$}
+% 	\SetKwFunction{FindPair}{FindPair}
+% 	\SetKwFunction{UpdateGraph}{UpdateGraph}
+% 	\SetKwFunction{RecoverTimeLogic}{RecoverTimeLogic}
+% 	\While{is not Empty}{	
+% 	$Queue$ $\leftarrow$ \FindPair{$G_d$}
+% 	\While{Queue is not Empty}{
+% 			$P$ $\leftarrow$ $Queue.poll()$ \\
+% 			$s \leftarrow P.source$\\
+% 			$t \leftarrow P.target$\\
+% 			\If{Set contains s $or$ Set contains t}{continue} \\
+% 			$list1 \leftarrow$ list of outgoing edges of $s$ whose target is not $t$ \\
+% 			$list2 \leftarrow$ V.list\\
+% 			\UpdateGraph($G_d$,$list1$,$list2$)\\
+% 			add $S$ to $Set$\;
+% 		}	
+% 		\caption{Node Split}
+% 	\label{alg:split}
+% \end{algorithm}
+
+% \begin{algorithm}
+%     \KwIn{Dependency Graph(G)}
+%     \KwOut{A simple directed graph}
+%           $Queue \leftarrow FindPair(G)$ \\
+%           \While{Queue is not Empty}{
+%             \While{Queue is not Empty}{
+%                 NodePair \leftarrow $Queue.poll()$ \\
+%                 \If{NodePair.u or NodePair.v has been splited}{
+%                     continue
+%                 }
+%                 UpdateGraph(NodePair.u) \\
+%             }
+%             Queue \leftarrow FindPair(G) \\
+%           }
+%           CheckCasualRelation(G)\\
+%         \caption{Node Split}
+%     \label{alg:split}
+% \end{algorithm}

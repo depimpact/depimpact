@@ -1,0 +1,72 @@
+\section{Evaluation}
+
+We build \tool upon Sysdig~\cite{sysdig}, and deployed our tool in a server to collect system auditing events and perform attack investigation. 
+The server is used by other users for performing daily tasks, so that enough noise of irrelevant system activities can be collected.
+We performed a series of attacks based on known exploits in the deployed environment,
+and applied \tool to perform attack investigation on the attacks, demonstrating the effectiveness of \tool.
+In total, our evaluations use 
+%53GB of 
+real
+%52GB of real, 24-hour unstopped, 
+system monitoring data that consists of \emph{2 billion} events. 
+Each attack is done with the time gap being at least 1 hour.
+
+Specifically, we conduct three sets of evaluations.
+First, to evaluate the effectiveness of \tool in propagating reputations,
+we compare the reputation scores of the POI entities against the expected reputation scores in benign scenarios (POI entities coming from trusted sources) and attack scenarios (POI entities coming from suspicious sources).
+We also compare the results with three other weight computation approaches.
+Second, we compare the weight computation in \tool with the edge prioritization of the state-of-the-art causality analysis, PrioTracker~\cite{liu2018priotracker}, which prioritizes edges during dependency search based on the fanout of nodes.
+Finally, we evaluate the effectiveness of \tool in revealing critical edges for attack sequence reconstruction.
+
+
+
+
+
+% \subsection{Evaluation Results}
+% To evaluate the accuracy and effect of our method, we prepared 20 cases. There are 10 cases covering the most common user activities including file read/write, network download and decompress. Table~\ref{tab:benignHighRP} shows the reputation result of four methods.
+% Table~\ref{tab:Reduction} shows our method reduction rate.
+
+\subsection{Overall Evaluation Setup}
+\label{subsec:cases}
+The evaluations are conducted on a server with an Intel(R) Xeon(R) CPU E5-2637 v4 (3.50GHz), 256GB RAM running 64bit Ubuntu 18.04.1.
+We performed 8 tasks to inject benign and malicious payloads into the system through key system interfaces that are vulnerable for attacks.
+We also performed 5 real APT attacks in the deployed environment. 
+We then collected the system auditing events and applied \tool to analyze the events.
+
+
+\subsubsection{Benign and Malicious Payloads Through Key System Interfaces}
+\label{subsub:benign-cases}
+We performed 8 tasks that employ the common system interfaces to inject benign or malicious payloads. These representative system interfaces are commonly exploited in attacks~\cite{securitybook}.
+
+
+\begin{itemize}[noitemsep, topsep=1pt, partopsep=1pt, listparindent=\parindent, leftmargin=*]
+\item File merge: \emph{2File}, \emph{3File}
+
+\item Shell execution: \emph{shell-script} (list all files in the Home folder and write the results to a file)
+
+\item File download: \emph{curl}, \emph{wget}, \emph{shell-wget} (wget called by a shell script), \emph{python-wget} (wget called by a Python script)
+
+\item File transfer: \emph{scp}
+\end{itemize}
+
+\input{tables/benignCasesHighRP.tex}
+% \input{tables/attacksHighRP.tex}
+\input{tables/benignCasesLowRP.tex}
+
+\input{attacks.tex}
+
+
+
+
+
+\subsection{Evaluation Results}
+\label{subsec:eval-results}
+
+
+
+
+\input{reputation-results.tex}
+
+\input{reduction-results.tex}
+
+

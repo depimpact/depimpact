@@ -1,0 +1,133 @@
+\section{Evaluation}
+
+We built \tool ($\sim$20K lines of code in Java) upon Sysdig~\cite{sysdig}, 
+and evaluate \tool using both the attack cases constructed based on the known exploits~\cite{exploitdb,liu2018priotracker,kwon2018mci,reduction} and the attack cases collected by the DARPA Transparent Computing (TC) program~\cite{tc}.
+In the evaluations, we aim to answer the following research questions:
+
+\begin{itemize}[noitemsep, topsep=1pt, partopsep=1pt, listparindent=\parindent, leftmargin=*]
+% \begin{itemize}
+\item \textbf{RQ1}: How effective is \tool in revealing attack sequences in comparison with other state-of-art techniques? 
+\item \textbf{RQ2}: How many top-ranked entry nodes should be used in \tool for revealing attack sequences?
+\item \textbf{RQ3}: How effective is \tool in revealing attack entries?
+\item \textbf{RQ4}: How efficient is \tool in investigating an attack?
+\end{itemize}
+
+% RQ1 aims to measure the effectiveness of using only weights for graph reduction.
+% Its results will provide motivation for the design of \tool.
+%  Its result evaluate the effectiveness of \tool for dependency graph reduction, which plays an essential role in addressing the challenges mentioned in \cref{sec:intro}.
+
+% RQ1 aims to evaluate the overall effectiveness of \tool in dependency graph reduction, and compare \tool with other state-of-the-art causality analysis techniques.
+% RQ2 aims to evaluate how the top-ranked entry nodes affect the effectiveness of \tool.
+% RQ3 aims to evaluate whether \tool consistently ranks the attack entries 
+% upfront, and compare \tool with other baseline approaches.
+% RQ4 aims to measure the execution times of \tool and its variation, and compare \tool with other state-of-the-art causality analysis techniques.
+
+\input{tables/2021usenix/summary}
+
+\subsection{Evaluation Setup}
+\label{subsec:evalsetup}
+We deployed Sysdig~\cite{sysdig} on 5 Linux hosts to collect system auditing events and then applied \tool to perform attack investigation. 
+\tool is executed on a server with an Intel(R) Xeon(R) CPU E5-2637 v4 (3.50GHz), 256GB RAM running 64bit Ubuntu 18.04.1.
+For investigating the attack cases based on the known exploits, we performed 10 attacks in the deployed environment: 7 attacks based on commonly used exploits and 3 multi-host and mutli-step intrusive attacks based on the Cyber Kill Chain framework~\cite{cyberkillchain} and CVE reports~\cite{cve}.
+The deployed hosts have 12 active users with hundreds of processes, and are used for various types of daily tasks such as file manipulation, text editing, and software development, which are representative of real-world usage.
+During evaluation, the deployed hosts continue to resume their routine tasks to emulate the real-world deployment where irrelevant system activities and attack activities co-exist.
+The routine tasks on these machines ensure that enough noise of irrelevant system activities is collected.
+In total, the real system audit logs collected in our deployed hosts contain \emph{$\sim$100 million} events. 
+The DARPA dataset includes system audit logs collected from 5 hosts with different OS systems.
+We developed a tool to parse the released logs and loaded the events into our databases.
+In total, the DARPA dataset used in our evaluation contains \emph{$\sim$50 million} events.
+We next describe these attacks in detail. 
+
+
+
+
+% We performed a series of attacks based on known exploits~\cite{exploitdb,liu2018priotracker,kwon2018mci,reduction} in the deployed environment, and applied \tool to 
+% investigate these attacks, demonstrating the effectiveness of \tool.
+% We then collected system auditing events for the attacks and applied \tool to analyze events. 
+% There are five more attacks performed by researchers of DARPA transparent computing program (DARPA TC).
+
+
+
+
+
+
+\subsubsection{Attacks Based on Commonly Used Exploits}
+\label{subsub:benign-cases}
+These 7 attacks are used in prior work's evaluations~\cite{exploitdb,liu2018priotracker,kwon2018mci,reduction},
+which consist of the following scenarios: 
+\begin{itemize}[noitemsep, topsep=1pt, partopsep=1pt, listparindent=\parindent, leftmargin=*]
+    \item \textit{Wget Executable}: A vulnerable server allows the attacker to download executable files using wget. 
+    The attacker downloads python scripts and executes the scripts.
+    \item \textit{Illegal Storage}: A server administrator uses wget to download suspicious files to a user's home directory.
+    \item \textit{Illegal Storage 2}: A server administrator uses curl to download suspicious files to a user's home directory.
+    \item \textit{Hide File}: The goal of the attacker is to hide malicious file among the user's normal files. 
+    The attacker downloads the malicious script and hides it by changing its file name and location.
+    \item \textit{Steal Information}: The attacker steals the user's sensitive information and writes the information to a hidden file.
+    \item \textit{Backdoor Download}: A malicious insider uses the ping command to connect to the malicious server, and then downloads the backdoor script from the server and hides the script by renaming it.
+    \item \textit{Annoying Server User}: 
+    %A vulnerable server is used by multiple users. 
+    The annoying user logs into other user's home directories on a vulnerable server and writes some garbage data to other user's files. 
+\end{itemize}
+
+
+\input{attacks.tex}
+\input{darpa-desc}
+
+
+
+\subsubsection{Obtaining Ground Truth for the Attacks}
+For the attack cases performed on our hosts, we identified the POI events based on the performed attacks and applied backward causality analysis from the POI events to obtain the system dependency graphs.
+For the attack cases in the DARPA dataset, we queried the databases that are loaded with the logs to identify the POI events based on the attack description, and applied backward causality analysis from the POI events to obtain the system dependency graphs.
+For the attacks involving multiple hosts, \tool performs cross-host causality analysis based on the existing techniques~\cite{liu2018priotracker,backtracking2},
+which produces causality graphs that include special network connection edges to represent connections among multiple hosts.
+% These connection edges ensure that the dependency flows are not cut off across hosts. 
+Finally, within our best efforts, we manually ensured that the critical edges and the attack entries were identified based on the knowledge of the performed attacks and the attack descriptions in these system dependency graphs.
+
+
+\cref{tab:stasticalSummary} shows the statistics of the generated dependency graphs for the attacks. 
+Columns ``Causality Ana. \# V'' and ``Causality Ana. \# E'' show the number of nodes and edges after performing the causality analysis from the POI events.
+Columns ``Edge Mer. \# V'' and ``Edge Mer. \# E'' show the number of nodes and edges after applying edge merges (\cref{subsubsec:edge-merge}).
+Columns ``Entry Nodes'' and  ``Critical Edge'' show the number of entry nodes and critical edges of the dependency graphs. 
+Column ``Attack Entries'' shows the number of entry nodes that are labelled as attack entries.
+Column ``POI'' shows the data size of the files in the POI events.
+%
+We clearly observe that even after edge merges, there still remains a large number of edges in the dependency graphs ($631$K on average with the max being $3.3$ million edges), which motivates the further pruning provided by \tool.
+Moreover, in these $15$ attacks, the files in the POI events have diversified sizes, ranging from $124$ bytes to $~50M$ bytes, and on average, there are $42,757$ edges (with the max being $962,706$) that have similar data sizes as the files in the POI events.
+Thus, directly using the data flow amount to reveal attack sequences will include lots of irrelevant edges in the results, which motivates \tool to combine multiple features for computing edge weights to achieve better performance.
+
+
+\myparatight{Evaluation Metrics}
+\eat{
+To measure the missing of critical edges, we compute the \emph{missing rate} $M_{miss} = N_{miss} / N_{critical}$, where $N_{miss}$ represents the number of missing critical edges and $N_{critical}$ represents the total number of critical edges (Column ``Critical Edge'' in \cref{tab:stasticalSummary}).
+To measure the impacts of the top-ranked entry nodes, we show the edge number of the critical component \tool in \cref{fig:rq2edge}.}
+Besides measuring false positives (detected edges that are not critical edges) and false negatives (missing edges that are critical edges), we compute the false negative rate $FNR = FN / E_{c}$, where $FN$ represents the number of false positives and $E_{c}$ represents the number of critical edges (Column ``Critical Edge'' in \cref{tab:stasticalSummary}),
+and the false positive rate $FPR = FP/E_{total}$, where $FP$ represents the number of false positives and $E_{total}$ represents the number of edges from the Column ``Edge Merge \# E'' in \cref{tab:stasticalSummary}.
+
+
+
+% These  cover a wide range of POI's size, from several kilobytes to $~50$ megabytes.
+
+
+
+\input{rq1.tex}
+
+\input{rq2.tex}
+
+\input{rq3.tex}
+
+\input{rq4.tex}
+
+% \subsection{Case Study}
+% \begin{figure*}
+%     \centering
+%     \includegraphics[width=0.98\textwidth]{figs/2021usenix/multihost.pdf}
+%     \caption{Caption}
+%     \label{fig:my_label}
+% \end{figure*}
+
+
+
+
+
+
+

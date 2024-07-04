@@ -1,0 +1,74 @@
+
+\section{Related Work}
+\label{sec:literature}
+
+% In this section, we survey three categories of related work.
+
+
+\myparatight{Forensic Analysis via System Audit Logs}
+% Significant progress has been made to leverage system-level audit logging for f.
+%
+Causality analysis based on system auditing data plays a critical role for forensic analysis.
+King et al.~\cite{backtracking,backtracking2} proposed a backward causality analysis technique by automatically reconstructing a series of events that are dependent on a user-specified POI event.
+Goel et al.~\cite{taser} proposed a technique that recovers from an intrusion based on forensic analysis.
+%Further
+Recent efforts have been made to mitigate the dependency explosion problem by performing fine-grained causality analysis~\cite{beep,ma2016protracer,mcitracking,ji2017rain,ji2018enabling}, prioritizing dependencies~\cite{liu2018priotracker,hassan2019nodoze}, customized kernel~\cite{trustkernel}, and optimizing storage~\cite{loggc,reduction,reduction2,reduction3}. 
+However, these techniques suffer from adoption limitations as they mainly rely on heuristic rules that cause loss of information~\cite{backtracking}, intrusive system changes such as binary instrumentation~\cite{ma2016protracer,mcitracking} and kernel customization~\cite{trustkernel}, or execution profiles that have limited generalizations~\cite{hassan2019nodoze}.
+\tool proposes to compute discriminative dependency weights based on multiple features and perform back-propagation from the POI event to compute dependency impacts for identifying attack entries, which do not share the same adoption limitations with the existing techniques. 
+Our evaluation results further demonstrate the effectiveness of \tool over the existing techniques.
+%capture more types of attacks.
+
+
+Behavior querying leverages domain-specific languages (DSLs) to search for patterns of system call events.
+Gao et al.~\cite{gao2018aiql,gao2018saql} proposed domain-specific languages that enable efficient attack investigation and attack detection by querying the historical and real-time stream of system call events.
+A major limitation of these DSLs is that they require manual efforts to construct the queries, which is labor-intensive and error-prone.
+Gao et al.~\cite{gao2021enabling} further proposed an automated threat hunting approach via extracting knowledge from cyber threat intelligence (CTI) reports using NLP and synthesizing threat hunting queries from the extracted knowledge.
+Milajerdi et al.~\cite{HOLMES} proposed to rely on the correlation of suspicious information flows to detect ongoing attack campaigns.
+They further proposed to leverage the knowledge from CTI reports to align attack behaviors recorded in system auditing data via graph pattern matching~\cite{poirot}. 
+Pasquier et al.~\cite{pasquier2018runtime} proposed a runtime analysis of provenance by combining runtime kernel-layer reference monitor with a query module. 
+Hossain et al.~\cite{sleuth} proposed a tag-based technique to perform real-time attack detection and reconstruction for system auditing data. 
+\tool can be interoperated with these techniques to achieve a better defense.
+
+% To reduce the false threat alarms, Hassan et al.~\cite{hassan2019nodoze} proposed to rely on the contextual and historical information of generated threat alert to combat threat alert fatigue.
+% automate provenance analysis, reducing large number of false alarms keeping the true attack scenarios. Based on their ranked threats, \tool can further complement their work in revealing attack sequence for the threats. 
+
+
+
+% \pgao{Need to add recent publications, sp19, usniex 19, ccs19, sp20}
+
+
+
+
+\eat{
+To mitigate the burden of storing large amount of system monitoring data, 
+Lee et al.~\cite{loggc} proposed to leverage garbage collection to remove temporary files,
+Xu et al.~\cite{reduction} proposed to merge dependencies while still preserving high-fidelity causal dependencies,
+and Tang et al.~\cite{reduction2} used templates to summarize the set of system libraries loaded at the process initiation period.
+\tool can be 
+integrated with these works to achieve better scalability for handling cases that span a long period of time (\eg months).}
+
+
+
+\myparatight{Score Propagation}
+Our relevance score propagation scheme was inspired by the TrustRank algorithm~\cite{Gyongyi:2004:vldb}, which was originally designed to separate spam and reputable web pages: it first selects a small set of reputable seed pages, then propagates the trust scores following the link structures using the PageRank algorithm~\cite{pagerank}, and identifies spam pages as those with low scores. Similar ideas have been applied in security and privacy application scenarios
+including Sybil detection~\cite{cao2012sybilrank,gao2018sybilfuse} and fake review detection~\cite{Rayana:2015:COS:2783258.2783370}.
+%, and attribute inference attacks~\cite{jia2017attriinfer}.
+%
+\tool is the first work that applies the score propagation idea in system audit logging domain that propagates dependency impacts to identify attack entries for filtering irrelevant dependencies.
+
+% with the focus on reducing the size of dependency graph and identifying relevant dependencies to facilitate forensic investigation.
+
+%the reputation score in an inheritance fashion rather than a distribution fashion, which avoids the serious degradation of reputation scores after propagating on long dependency paths.
+
+%Wang et al.~\cite{wang2018graph} arguments the graph-based security analysis with weighted edges to counter cases with large number of heterogeneous edges. 
+%Their approach requires the labels of the nodes to train a model, which is difficult to obtain for the diversified set of the attacks.
+
+
+
+
+
+\myparatight{Edge Weight Computation}
+Several components of \tool are built up on a set of existing techniques. Our edge clustering step is based on Multi-KMeans++~\cite{Arthur:2007:KAC:1283383.1283494}, which optimizes the seed initialization for better clustering quality, compared with the standard KMeans. 
+Our discriminative feature projection step is based on Linear Discriminant Analysis (LDA)~\cite{Mika99fisherdiscriminant}, which finds a linear combination of features that characterizes or separates multiple classes of objects. 
+
+%Yet, to apply it in our setting, we extend the standard LDA to handle the challenges including lack of a prior class information, matrix singularity, and limited number of labeled instances. 

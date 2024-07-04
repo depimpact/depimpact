@@ -1,0 +1,137 @@
+\documentclass[letterpaper,twocolumn,10pt]{article}
+\usepackage{usenix2019_v3}
+
+% to be able to draw some self-contained figs
+\usepackage{tikz}
+\usepackage{amsmath}
+\input{macros}
+
+%-------------------------------------------------------------------------------
+\begin{document}
+%-------------------------------------------------------------------------------
+
+%don't want date printed
+\date{}
+
+
+% make title bold and 14 pt font (Latex default is non-bold, 16 pt)
+\title{\Large \bf Back-Propagating System Dependency Impact for Attack Investigation}
+\renewcommand\footnotemark{}
+% \renewcommand\footnoterule{}
+
+%for single author (just remove % characters)
+\author{
+{\rm Pengcheng Fang$^{1*}$}\thanks{$^*$Equal contribution}
+\and
+{\rm Peng Gao$^{2*}$}
+\and
+{\rm Changlin Liu$^1$}
+\and
+{\rm Erman Ayday$^1$}
+\and
+{\rm Kangkook Jee$^3$}
+\and
+{\rm Ting Wang$^4$}
+\and
+{\rm Yanfang (Fanny) Ye$^1$}
+\and
+{\rm Zhuotao Liu$^5$}
+\and
+{\rm Xusheng Xiao$^1$}
+\and
+{\normalsize $^1$Department of Computer and Data Sciences, Case Western Reserve University, USA}
+\and
+{\normalsize $^2$Department of Computer Science, Virginia Tech, USA}
+\and
+{\normalsize $^3$Department of Computer Science, University of Texas at Dallas, USA}
+\and
+{\normalsize $^4$College of Information Sciences and Technology, Penn State University, USA}
+\and
+{\normalsize $^5$Institute For Network Sciences And Cyberspace, Tsinghua University, China}
+\and
+{\normalsize $^1$\{pxf109, cxl1029, exa208, yanfang.ye, xusheng.xiao\}@case.edu\; $^2$penggao@vt.edu\; $^3$kangkook.jee@utdallas.edu}
+\and
+{\normalsize $^4$tbw5359@psu.edu\; $^5$zhuotaoliu@tsinghua.edu.cn}
+% \and
+% {}
+% \and
+% {}
+% \and
+% {$^5$Tsinghua University}
+% \and
+% {$^5$Tsinghua University}
+
+
+% {\rm Pengcheng Fang}\thanks{Equal contribution}\\
+% Case Western Reserve University \\
+% pxf109@case.edu
+% \and
+% {\rm Peng Gao$^*$}\\
+% Virginia Tech\\
+% penggao@vt.edu
+% \and
+% {\rm Changlin Liu}\\
+% Case Western Reserve University\\
+% cxl1029@case.edu
+% \and
+% {\rm Erman Ayday}\\
+% Case Western Reserve University\\
+% exa208@case.edu
+% \and
+% {\rm Kangkook Jee}\\
+% University of Texas at Dallas\\
+% kangkook.jee@utdallas.edu
+% \and
+% {\rm Ting Wang}\\
+% Penn State University\\
+% tbw5359@psu.edu
+% \and
+% {\rm Yanfang Ye}\\
+% Case Western Reserve University\\\
+% yanfang.ye@case.edu
+% \and
+% {\rm Zhuotao Liu}\\
+% Tsinghua University\\
+% zhuotaoliu@tsinghua.edu.cn
+% \and
+% {\rm Xusheng Xiao}\\
+% Case Western Reserve University\\\
+% xusheng.xiao@case.edu
+}
+
+\maketitle
+
+\input{abstract}
+\input{intro}
+\input{background}
+\input{overview}
+\input{approach}
+\input{eval-new}
+\input{discussion}
+\input{literature}
+\input{conclusion}
+\input{acknowledgement}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+%-------------------------------------------------------------------------------
+\bibliographystyle{plain}
+\bibliography{./bibliography/refs}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\end{document}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%  LocalWords:  endnotes includegraphics fread ptr nobj noindent
+%%  LocalWords:  pdflatex acks

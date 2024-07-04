@@ -1,0 +1,164 @@
+%\usepackage{times}
+\usepackage{graphicx}
+%\usepackage{epsf}
+%\usepackage{verbatim}
+%\usepackage{psfig}
+% \usepackage{cite}
+\usepackage{url}
+\usepackage{color}
+%\usepackage[dvipsnames]{xcolor}
+\usepackage{alltt}
+\usepackage{syntax}
+\usepackage{newfloat}
+\usepackage{multicol}
+\usepackage{amsmath}
+\usepackage{tikz}
+\usepackage{filecontents} % inlined bib file
+\usepackage{graphicx}
+\usepackage{epstopdf} %converting to PDF
+\usepackage{xspace}
+\usepackage{enumitem}
+\usepackage{svg}
+\usepackage[ruled,linesnumbered,noend]{algorithm2e}
+\SetKw{Continue}{continue}
+\usepackage{adjustbox}
+\usepackage{wrapfig}
+\usepackage{graphbox}
+\usepackage{rotating}
+\usepackage{pdfpages}
+\usepackage{mdwlist}
+\usepackage{multirow}
+
+
+% \usepackage{subfig}
+\usepackage{subcaption}
+\usepackage[labelfont=bf,skip=0pt]{caption}
+%\DeclareCaptionType{copyrightbox}
+\captionsetup[figure]{font=bf,skip=0pt}%set figure caption
+\captionsetup[table]{font=bf,skip=0pt}%set table caption
+
+
+\usepackage{hyperref} %change this later
+\hypersetup{
+	citebordercolor={0 1 0},
+	citecolor=blue,
+	colorlinks=false,
+	filebordercolor={0 .5 .5},
+	filecolor=green,
+	linkbordercolor={1 0 0},
+	linkcolor=blue,
+	menubordercolor={1 0 0},
+	pageanchor=true,
+	pagebackref=true,
+	pdfborder={0 0 1},
+	pdfpagelabels=true,
+	pdftex,
+	plainpages=false,
+	urlbordercolor={0 1 1},
+	urlcolor=blue,
+}
+
+
+\usepackage[capitalize,nameinlink]{cleveref}
+\hypersetup{%
+	bookmarksnumbered, bookmarksopen=true, bookmarksopenlevel=1,%
+}
+\crefname{figure}{Figure}{Figures}
+\crefname{listing}{Query}{Queries}
+\crefname{section}{Section}{Sections}
+\crefname{table}{Table}{Tables}
+\crefname{BNF}{Grammar}{Grammars}
+\crefname{algorithm}{Algorithm}{Algorithms}
+\crefname{equation}{Equation}{Equations}
+
+
+\usepackage{listings}
+\definecolor{mygreen}{rgb}{0,0.6,0}
+\definecolor{mygray}{rgb}{0.5,0.5,0.5}
+%\definecolor{mymauve}{rgb}{0.58,0,0.82}
+\renewcommand{\ttdefault}{pcr}
+\renewcommand{\lstlistingname}{Query}
+\lstset{
+	backgroundcolor=\color{white},
+	basicstyle=\scriptsize\ttfamily\bfseries,
+	breaklines=true,
+	keepspaces=true,
+	numbers=left,
+	numbersep=4pt,
+	numberstyle=\tiny\color{gray},
+	rulecolor=\color{black},
+	showspaces=false,
+	showstringspaces=false,
+	showtabs=false,
+	stepnumber=1,
+	stringstyle=\color{black},
+	tabsize=2,
+	language=C++
+}
+\lstset{
+	commentstyle=\color{mygreen},
+	frame=lines,
+	keywordstyle=\color{red},
+	keywordstyle=[2]\color{black},
+	morekeywords={with,return,count,distinct,as,at,from,to,before,after,last,forward,backward,sort,by,asc,desc,in}, % no space
+	keywords=[2] {proc,file,ip}
+}
+\newcommand{\incode}[1]{\lstinline{#1}}
+
+
+
+
+
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator*{\argmin}{arg\,min}
+
+\DeclareFloatingEnvironment[
+% the file extension for the file used to create the list:
+fileext   = logr,% don't use log here!
+% the heading for the list:
+listname  = {List of Grammars},
+% the name used in captions:
+name      = Grammar,
+% the default floating parameters if the environment is used
+% without optional argument:
+placement = !htbp
+]{BNF}
+
+
+
+\newcommand*{\thead}[1]{\multicolumn{1}{|c|}{\bfseries #1}} %for table header
+\newcommand*{\theadnoline}[1]{\multicolumn{1}{c}{\bfseries #1}} %for table header
+\newcommand{\msim}{\raise.17ex\hbox{$\scriptstyle\sim$}}
+\newcommand{\dcaption}[1]{\caption*{\par\small{#1}}}
+%\newcommand{\argmax}{\operatornamewithlimits{argmax}}
+\newcommand{\myparatight}[1]{\smallskip\noindent{\bf {#1}.}}
+\newcommand{\norm}[1]{\left\lVert #1 \right\rVert_2}
+\newcommand{\sign}{sign}
+\newcommand{\eat}[1]{}
+\newcommand{\eg}{e.g.,\xspace}
+\newcommand{\ie}{i.e.,\xspace}
+\newcommand{\aka}{a.k.a,\xspace}
+
+\newcommand{\red}{\textcolor{red}}
+\newcommand{\pgao}[1]{\textsf{\color{blue}{({pgao: #1})}}}
+\newcommand{\xiao}[1]{\textsf{\color{red}{({Xiao: #1})}}}
+\newcommand{\pfang}[1]{\textsf{\color{violet}{({Fang: #1})}}}
+\newcommand{\zt}[1]{\textsf{\color{brown}{({ZT: #1})}}}
+\newcommand{\cl}[1]{\textsf{\color{green}{({Changlin: #1})}}}
+
+
+
+\newcommand{\tool}{\textsc{DepImpact}\xspace}
+\newcommand{\lpfixed}{\textsc{LP-Fixed}\xspace}
+\newcommand{\lpglobal}{\textsc{LP-Global}\xspace}
+\newcommand{\lpglobalplus}{\textsc{LP-Global+}\xspace}
+% \renewcommand{\baselinestretch}{0.97}
+
+
+\newcommand{\distance}{4pt}
+\setlength{\textfloatsep}{\distance}%set distance between figure/tables on the top/bottom with text
+\setlength{\floatsep}{\distance}%set distance between figures or tables
+\setlength{\intextsep}{\distance}%set distance between figures/tables in text with text
+\setlength{\dbltextfloatsep}{\distance} %distance between a figure/table spanning both columns and the text;
+\setlength{\dblfloatsep}{\distance} %distance between two figures/tables spanning both columns.
+

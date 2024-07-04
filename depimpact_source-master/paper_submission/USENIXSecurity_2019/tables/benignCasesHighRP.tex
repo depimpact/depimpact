@@ -1,0 +1,22 @@
+\begin{table}[!tb]
+        \centering
+        \caption{POI reputations of benign payloads through key system interfaces (expected $1.0$)}
+        \label{tab:benignHighRP}
+        \resizebox{0.48\textwidth}{!}{%
+            \begin{tabular}{|l|r|r|r|r|r|}
+            \hline
+            \multicolumn{1}{|c|}{\textbf{Attack/Task}} & \multicolumn{1}{c|}{\textbf{\lpfixed}} & \multicolumn{1}{c|}{\textbf{PrioTracker}} & \multicolumn{1}{c|}{\textbf{\lpglobal}} & \multicolumn{1}{c|}{\textbf{\lpglobalplus}} & \multicolumn{1}{c|}{\textbf{\tool}} \\ \hline
+            3File                               & 0.85                                   & 0.50                                 & 0.50                                   & 0.98                                    & 1.00                         \\ \hline
+            2File                               & 0.80                                   & 0.50                                 & 0.50                                   & 0.50                                    & 1.00                         \\ \hline
+            curl                                & 0.70                                   & 0.60                                 & 0.51                                   & 0.51                                    & 0.99                         \\ \hline
+            shell\_script                       & 0.62                                   & 0.50                                 & 0.50                                   & 0.57                                    & 0.96                         \\ \hline
+            python\_wget                        & 0.71                                   & 0.65                                 & 0.61                                   & 0.63                                    & 0.99                         \\ \hline
+            scp                                 & 0.74                                   & 1.00                                 & 0.93                                   & 0.92                                    & 1.00                         \\ \hline
+            shell\_wget                         & 0.80                                   & 0.75                                 & 0.82                                   & 0.89                                    & 0.98                         \\ \hline
+            wget                                & 0.71                                   & 0.54                                 & 0.50                                   & 0.50                                    & 1.00                         \\ \hline
+            \textbf{avg}                                 & 0.74                                   & 0.63                                 & 0.61                                   & 0.69                                    & 0.99                         \\ \hline
+            \end{tabular}
+
+        \label{tab:normalcase}
+        }
+\end{table}

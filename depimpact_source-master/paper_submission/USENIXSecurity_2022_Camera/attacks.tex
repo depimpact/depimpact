@@ -1,0 +1,104 @@
+\subsubsection{Multi-host Intrusive Attacks}
+\label{subsubsec:attack-cases}
+
+% \cl{
+% We performed 3 multi-host intrusive attacks to capture the important traits of attacks depicted in the Cyber Kill Chain framework~\cite{cyberkillchain} and CVE~\cite{cve}. 
+% In these 3 attacks, the attacker uses an external host to perform penetration, distribute malware, maintain connection and receive data. 
+% We call this the C2 server. 
+% The first host in a local network that's compromised is called Host 1. 
+% Host 1 is often a starting point used by the attacker to perform lateral movement and other malicious actions to compromise more hosts in the network(\eg Host 2, Host 3 ... Host n). 
+% Host 1 through Host n are called victim hosts.
+% }
+These 3 multi-host intrusive attacks capture the important traits of attacks depicted in the Cyber Kill Chain framework~\cite{cyberkillchain} and CVE~\cite{cve}. 
+In these 3 attacks, the attacker uses an external host, referred to as the C2 (Command and Control) server, to perform penetration, distribute malware, and receive data. 
+The first host that is compromised by the attack is called Host 1,
+which is a starting point to perform lateral movement and other malicious actions to compromise more hosts inside the network (\ie Host 2, \ldots, Host n). 
+% Host 1 through Host n are called victim hosts.
+% Note that some steps of these attacks may not be fully captured by system auditing (\eg user inputs and inter-process communications).
+% Such limitations can be addressed by employing more powerful auditing tools, which is
+% %out of the scope of
+% orthogonal to this paper.
+
+\myparatight{Attack 1: Shellshock Penetration}
+% Once breaks into the system, the attacker can launch different malicious
+% behaviors (\eg password cracking, information leakage, denial of services). 
+% After the initial shellshock penetration, the attacker first connects to Cloud services (\eg Dropbox, Twitter) and downloads an image where C2 (Command and Control) host's IP address is encoded in the EXIF metadata. The behavior is a common practice shared by APT attacks~\cite{hammertoss,vpnfilter} to evade the network-based detection system based on DNS blacklisting. 
+% % The attacker also tries to discover reachable hosts in the network by scanning the ssh configuration file.
+% Using the IP, the malware connects to the C2 host. 
+% The C2 host directs the malware to take some lateral movements, including a series of stealthy reconnaissance maneuvers. 
+% In this stage, the attacker generally takes a number of actions. 
+% Among those, we emulate the password cracking attack. 
+% The attacker downloads password cracker payload  and runs it against password shadow files.
+% The results are gathered back to the first victim host and compressed there to be further exfiltrated. 
+% For this attack, there are $2$ victim hosts.
+% We emulate password cracking and gathering in this attack. 
+% 4 victim hosts are involved. 
+% the attacker first penetrates into Host 1 exploiting the Shellshock vulnerability.
+After the initial shellshock penetration at Host 1, the attacker connects to Cloud services (\eg Dropbox, Twitter) and downloads an image where C2 server's IP address is encoded in the EXIF metadata. 
+The behavior is a common practice shared by APT attacks~\cite{hammertoss,vpnfilter} to evade the network-based detection system based on DNS blacklisting. 
+Based on the IP, the attacker downloads a malware from the C2 server to Host 1. 
+When the script is executed, it scans the ssh configuration file to locate reachable hosts in the network, discovering Host 2, Host 3, and Host 4.
+After this discovery phase, the malware downloads another script from the C2 server and sends it to these discovered hosts and steals password from them. 
+% \incode{crack_password.sh} 
+% This script will connect to the C2 server from Host 2, Host 3, and Host 4 and download a password cracker payload disguised as a benign dynamic linking library \incode{libfoo.so}. 
+% The library is then decrypted and unzipped to be a functional password cracker, 
+% which collects shadow files and cracks them to obtain plain text passwords. 
+% The cracked passwords are transferred back to Host 1 where they will be compressed to \incode{passwords.tar.bz2} waiting to be exfiltrated. 
+
+
+\myparatight{Attack 2: Data Leakage After Shellshock Penetration}
+% After lateral movements, the attacker attempts to steal the valuable assets from hosts in the same network. 
+% The attacker gets all the hosts' names from ssh configuration file in first victim. Then, the attacker send a malicious script from this victim to other hosts in the same network through the scp. 
+% After this step, the attacker runs this malicious script.
+% This stage mainly involves the behaviors of local and remote file system scanning activities, copying and compressing of important files, and transferring the files to host1.
+% Once this step succeeds, the attacker scraps files into a single compress file and transfers it back to C2 host. 
+% For this attack, there are $4$ victim hosts.
+% \eat{
+% \myparatight{Attack 2: Data Leakage - Steps}
+After the previous reconnaissance, the attacker downloads another malware, \incode{leak_data.sh}, from the C2 server and sends it to Host 2. 
+The malware scans for hidden files and files containing sensitive strings, and compresses them in a tarball \incode{leak.tar.bz2}. 
+The malware then transfers the tarball back to Host 1. 
+On Host 1, the tarball is encrypted and uploaded to the Internet. 
+% There are 2 victim hosts involved in this attack.
+
+
+\eat{
+\myparatight{Attack 4: Command-line Injection with Input Sanitization Failures}
+Different from the previous shellshock case, a program may contain vulnerabilities introduced by developer errors and this can also be a initial attack vector that invites the attacker into their target systems. To represent
+such cases, we wrote an web application prototype that fails to sanitize inputs for a certain web request, hence allows Command line Injection attack. 
+Our prototype service mimics the Jeep-Cherokee attack case~\cite{miller:remote:2015} which implements a remote access using the conventional web service API that
+internally uses DBUS service to run the designated commands. 
+Due to the developers' mistake, the web service fails to sanitize the remote inputs, the attacker can append arbitrary commands followed by semi-colon({\tt;}). 
+Leveraging this vulnerability, we can download backdoor program (\emph{commend-injection-c1}) and collect sensitive data (\emph{command-injection-c2}).
+}
+
+\myparatight{Attack 3: VPN Filter}
+% We prototyped a famous IoT attack campaign: VPN Filter malware~\cite{vpnfilterschenier}, which infected millions of IoT devices by exploiting a number of known or zero-day vulnerabilities~\cite{vpnfilter1,vpnfilter2}. 
+% The attack's significance lies in how the malware operates during its lateral movement stage following its initial penetration. 
+% The campaign employs up-to-date hacker practices to bypass conventional security solutions based on static blacklisting approaches and has an architecture to download the plug-in payload on-demand at run-time. 
+% We prototyped the malware by referring to one of its sample for x86 architecture~\cite{vpnfilterx86}.
+% % The VPN Filter stage 1 malware accesses a public image repository to get an image. In the EXIF metadata of the image, it contains the IP address for the stage 2 host. It downloads the VPN Filter stage2 from the stage2 server, and executes it to launch the attack.
+% The VPN Filter stage 1 malware accesses a public image repository to get an image.
+% In the EXIF metadata of the image, it contains the IP address for the stage 2 host. 
+% The malware will then establish a direct connection to the C2 server allowing the attacker to maintain a long term control over the victims. Through this connection, the attacker can monitor the activity and gather sensitive data continuously. 
+% For this attack, there are $2$ victim hosts.
+% \eat{
+% \myparatight{Attack 3: VPN Filter - steps}
+% At this stage, the attacker downloads a VPN Filter malware and then transfers it to other hosts. The malware downloads an image file from public cloud services (i.e. Dropbox). The EXIF metadata contained in the image file is decoded to be the IP address of the C2 server. The malware will then establish a direct connection to the C2 server allowing the attacker to maintain a long term control over the victims. Through this connection, the attacker can monitor the activity and gather sensitive data continuously.
+At this stage, the attacker seeks to maintain a direct connection to the victim hosts from the C2 server. 
+He utilizes the notorious VPN Filter malware~\cite{vpnfilterschenier} which infected millions of IoT devices by exploiting a number of known or zero-day vulnerabilities~\cite{vpnfilter1,vpnfilter2}. 
+After the initial penetration on Host 1 and discovery of Host 2, the attacker downloads the VPN Filter stage 1 malware from the C2 server to Host 1 and transfers it to Host 2.
+This malware then downloads another executable from the C2 server, and executes it to launch the attack and establish a connection to the C2 server.
+Using this connection, the attacker transfers a malicious script to Host 2 which will gather sensitive data on Host 2.
+% In this direct connection,  \incode{leak_data_single.sh} 
+
+% The campaign employs up-to-date hacker practices to bypass conventional security solutions based on static blacklisting approaches and has an architecture to download the plug-in payload on-demand at run-time. 
+% We prototype the malware by referring to one of its samples for x86 architecture~\cite{vpnfilterx86}. 
+% There are 2 victim hosts in this attack.
+% After the initial penetration on Host 1 and discovery of Host 2, the attacker downloads the VPN Filter stage 1 malware from the C2 server to Host 1 and transfers it to Host 2. 
+% using the credential on Host 1.
+% The VPN Filter stage 1 malware accesses a public image repository to get an image. In the EXIF metadata of the image, it contains the IP address for the C2 server. 
+% The VPN Filter stage 1 malware then downloads the VPN Filter stage2 executable from the C2 server, and executes it to launch the attack and establish a connection to the C2 server.
+% In this direct connection, the attacker transfers a malicious script \incode{leak_data_single.sh} to Host 2 which will gather sensitive data on Host 2.
+
+

@@ -1,0 +1,184 @@
+
+% drawio link: https://drive.google.com/file/d/1v-PvghSCGyJmhW1MbzjVfO94-1qarLaI/view?usp=sharing
+
+\begin{figure*}[!t]
+    \centering
+    \includegraphics[width=\textwidth, 
+                 keepaspectratio]{figs/usenix/overview.pdf}
+    \caption{Partial dependency graph of an attack that downloads a malicious file and hides the file by renaming it (rectangles for processes, ovals for files, parallelograms for network connections).
+    The complete dependency graph constructed from the POI (oval at the bottom right) via backward causality analysis contains $194,208$ nodes and $3,273,769$ edges.
+    %
+    Out of all these nodes and edges, only the dark black ones (as depicted in the picture) make up the critical component of the attack. The majority of them are only related to irrelevant system activities.
+    Thus, attack investigation is a process of finding a needle in a haystack. However, this process can be much easier if we can correctly rank the attack-relevant entry nodes at top (\ie IP, files and processes from which the critical sequence start) 
+    and performs forward causality analysis from these top ranked entry nodes to reveal the critical component.
+    %
+    % 
+    % %
+    % \tool serves as a framework to compute the relevance score of the 3 types of entry nodes, rank them, conduct forward causality analysis from the tops and reveal the critical component. 
+    }
+    % computing discriminative weights to reveal critical edges and propagating reputation from entry nodes to infer the POI %reputation, which can be used to identify the root cause nodes, determine the POI trustworthiness/suspiciousness, and reconstruct %the attack sequence, synergistically.
+    % Note that the reputation of the untrusted source on the top left propagates mainly through the surfaced critical edges.
+    %}
+   % \vspace{2mm}
+    \label{fig:motivate}
+\end{figure*}
+
+
+\section{Background and Motivation}
+
+\subsection{System Monitoring}
+\label{subsec:system-monitoring}
+
+System monitoring collects auditing events about system calls that are crucial in security analysis, describing the interactions among system entities.
+As shown in previous studies~\cite{backtracking,backtracking2,taser,wormlog,gao2018saql,gao2018aiql,mcitracking,logtracking,liu2018priotracker,hassan2019nodoze}, on mainstream operating systems (Windows, Linux, and Mac OS), system entities in most cases are files, processes, and network connections,
+and the collected system calls are mapped to three major types of system events:
+(i) file access, 
+(ii) processes creation and destruction, and 
+(iii) network access. 
+As such, we consider \emph{system entities} as \emph{files}, \emph{processes}, and \emph{network connections}. 
+We consider a \emph{system event} as the interaction between two system entities represented as \emph{$\langle$subject, operation, object$\rangle$}. Subjects are processes originating from software applications (\eg Chrome), and objects can be files, processes, and network connections. 
+We categorize system events into three types according to the types of their object entities, namely \emph{file events}, \emph{process events}, and \emph{network events}.
+
+
+Both entities and events have critical security-related
+attributes (\cref{tab:entity-attributes,tab:event-attributes}).
+Representative attributes of entities include file name, process executable name, IP, and port.
+%unique identifiers to distinguish entities (\eg file path, process name and PID, IP and port).
+Representative attributes of events include event origins (\eg start time/end time) and operations (\eg file read/write).
+%, and other security-related properties (\eg failure code). 
+%(\eg system call return code).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Causality Analysis}
+\label{subsec:causality-analysis}
+
+Causality analysis~\cite{backtracking,backtracking2,taser,intrusionrecovery,liu2018priotracker} analyzes the auditing events to infer their dependencies 
+%among system entities 
+and present the dependencies as a directed graph.
+%
+In the dependency graph $G(E,V)$, a node $v \in V$ represents a process, a file, or a network connection.
+An edge $e(u, v) \in E$ indicates a system auditing event involving two entities $u$ and $v$ (\eg process creation, file read or write, and network access), and its direction (from the source node $u$ to the sink node $v$) indicates the direction of data flow.
+Each edge is associated with a time window, $tw(e)$.
+We use $ts(e)$ and $te(e)$ to represent the start time and the end time of $e$.
+Formally, in the dependency graph, for two events $e_1(u_1, v_1) $ and $e_2(u_2, v_2)$, there exists causal dependency between $e_1$ and $e_2$ if $v_1 = u_2$ and $ts(e_1) < te(e_2)$.
+
+Causality analysis enables two important security applications:
+(i) \emph{backward causality analysis} that identifies the entry points of attacks, and (ii) \emph{forward causality analysis} that investigates the ramifications of attacks.
+Given a POI event $e_s(u,v)$, a backward causality analysis traces back from the source node $u$ to find all events that have causal dependencies on $u$,
+and a forward causality analysis traces forward from the sink node $v$ to find all events on which $v$ has causal dependencies.
+
+
+\input{tables/SystemEntities}
+\input{tables/SystemEvents}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Motivating Example}
+\label{subsec:motivating-example}
+
+\cref{fig:motivate} shows an example dependency graph of a 
+%real 
+file hiding activity: 
+a suspicious script \incode{mal.sh} is executed to download a malicious file \incode{mal} from a remote host \incode{192.1.1.254}. The file is then moved to \incode {user/mal} and renamed to \incode{user/file.txt}.
+%
+Given a POI which is the renamed file \incode{user/file.txt} (\ie the oval at the bottom right), the dependency graph (\cref{fig:motivate}) constructed from the POI via backward causality analysis 
+contains $194,208$ nodes and $3,273,769$ edges.
+%(the original dependency graph constructed from system audit logs contains $784$ nodes and $6,911$ edges).
+The critical edges that represent the relevant dependencies are painted in dark black.
+%
+The goal of attack investigation is to inspect the dependency graph to identify which part of the dependency graph is related to the POI (\ie nodes and edges in dark black).
+%the root cause node of the POI, reveal the attack edges, and reconstruct the attack sequence from the massive number of irrelevant nodes and edges.
+
+
+\myparatight{Challenges}
+As observed in \cref{fig:motivate}, attack investigation is a process of \emph{finding a needle in a haystack}: 
+a limited number of critical edges (\ie $12$) are buried in overwhelmingly large number ($\sim 3$ million) of non-critical edges (\eg irrelevant system activities), and same for the relevant entry nodes (\ie $3$ out of $~34k$ irrelevant entry nodes).
+%and normal program execution like Java and Python), 
+%and same for the root cause node (\ie $1$) is buried in many other entry nodes (\ie $80$;
+%\eg ssh logging in).
+%\eg network connections for browser updating and ssh logging in). 
+% Existing approaches~\cite{backtracking,backtracking2,taser,intrusionrecovery,liu2018priotracker} require intensive efforts of manually inspecting these edges and nodes for revealing critical edges, identifying root cause nodes, and reconstructing the attack sequence.
+% As such, how to automate this process for effectively finding a needle in a haystack becomes a key challenge.
+
+
+
+\myparatight{Using \tool for Identifying Critical Component}
+To remove irrelevant dependencies introduced by irrelevant system activities, \tool identifies the critical component, a subgraph that consists of mainly relevant dependencies, by (1) assigning weights to the edges and computing relevance scores for entry nodes, (2) ranking the entry nodes based on the relevance scores, and (3) performing forward causality analysis based on the top ranked entry nodes to filter out irrelevant parts of the graph.
+
+In this example, we divide the entry nodes into $3$ categories (\ie network connections, files, and processes), and each entry node is ranked by their relevance score in its own category.
+Here, \tool ranks the IP \incode{192.1.1.254} for \incode{mal} downloading as top $1$, the malicious script \incode{mal.sh} and the executable \incode{/bin/mv} for the process \incode{mv} as top $1$ and $2$.
+By performing forward causality analysis from these top 3 ranked entry nodes, \tool filters out most of the irrelevant dependencies ($\sim 3$ million) and reveals the critical component that consists of mainly the critical edges.
+
+
+% , which frees the investigator from the rest $34k$ irrelevant entry nodes.  
+
+
+\eat{
+\emph{Relevance Score Computation:}
+To compute the relevance scores of the entry nodes, \tool first assigns weights to the edges and propagate relevance scores from the POI back to the entry nodes. In our example, after obtaining the dependency graph, we use \tool to compute edge weights for a set of features. We select \incode{user/file.txt} to be the point of interest(POI) node and then relevance scores of all the entry nodes are computed by our algorithm.
+
+\emph{Entry Nodes Ranking}
+After relevance score computation, 
+% We can see the download network IP address is the top 1 candidate in network entry nodes category. The malicious script mal.sh and system file \/bin\/mv are all directly related to the POI event. These two files are also at the top 3 outputs generated by \tool. \tool's accurately detect the entry nodes under this scenario.
+
+\emph{Revealing Critical Component by Forward Causality Analysis}
+In \cref{fig:motivate}, after ranking the entry nodes based on the relevance score, \tool applies forward causality analysis from the selected top entry nodes. The top entry nodes are considered to be the beginnings of the attack sequence. The intersection of the forward dependency graph and the original dependency graph obtained by backward causality analysis is taken to be critical component. \tool can do forward analysis from multiple entry points to fight the missing of critical nodes or edges. In our case, we choose IP \incode{192.1.1.254}, file \incode{mal.sh} and \incode{/bin/mv} as the entry nodes. The union of the forward dependency graph generated from these nodes intersects with the original dependency graph revealing the critical component in dark black.
+}
+%
+%To propagate reputation, 
+
+% \emph{(2) Identifying Root Cause Nodes \& Determining POI Trustworthiness/Suspiciousness:}
+% For demonstration purposes, we set the reputation of the untrusted network connection source to $0.0$ and the reputation to the other entry nodes such as neutral system libraries to $0.5$.
+% Note that the security analyst has the flexibility to adopt other reputation assignment schemes for entry nodes based on the domain knowledge or external reputation sources (\cref{subsec:attack-investigation}).
+% The POI reputation after propagation is $0.14$, much closer to the reputation of the untrusted network source rather than the system libraries.
+% As such, we conclude that the untrusted network source is the root cause node that has a much higher impact on the POI.
+% Furthermore, since both the POI reputation and the reputation of its root cause node are low, we conclude that the POI is also untrusted.
+
+% \emph{(3) Reconstructing Attack Sequence:}
+% With effective edge weights, critical edges can be easily revealed from non-critical edges.
+% Furthermore, with node reputation, critical nodes (\ie nodes on critical edges) can also be clearly revealed from non-critical nodes.
+% In \cref{fig:motivate}, the average reputation of critical nodes is $0.09$, much closer to the reputation of the root cause node ($0.0$) than the average reputation of non-critical nodes ($0.45$). 
+% By setting proper thresholds (\cref{subsec:attack-investigation}), root cause node, critical nodes, critical edges, and POI entity can be connected together to reconstruct the attack sequence (\ie the dependency path in red shown in \cref{fig:motivate}), which details how the POI was created from the root cause node.
+
+
+
+
+
+\eat{
+\emph{(1) Revealing Critical Edges:}
+\tool computes discriminative weights for edges to reveal critical edges from non-critical edges.
+In the design of \tool, the edge weight is a real number in $(0, 1]$ that quantifies the \pgao{correlation} between the edge and the POI entity (POI event), and is computed from three features (\cref{subsec:feature-extraction}) that capture such correlation from different aspects, using a novel discriminative feature projection scheme (\cref{subsec:weight-computation}).
+The higher the edge weight, the more likely the edge is a critical edge that results in the POI.
+
+In \cref{fig:motivate}, the average weight of critical edges is $0.77$, much higher than the average weight of non-critical edges (\ie $0.07$).
+As such, the edge weights computed by \tool are effective in revealing critical edges from non-critical edges.
+}
+
+%In this example, compared with other (\ie non-critical) edges, the critical edges have more similar data amount as the data amount transmitted in the POI event, the start timestamps of these edges are closer to the POI event, and the incoming and outgoing edges are relatively small for the nodes involved in the critical edges. 
+
+
+\eat{
+
+\emph{(2) Identifying Root Cause Nodes \& Determining POI Trustworthiness/Suspiciousness}
+\tool propagates reputation from entry nodes in a weight-aware manner to infer the POI reputation.
+To prevent the rapid degradation of reputation on long dependency paths (\eg the dependency path from the untrusted source to the POI entity has $> 10$ hops), \tool employs a novel inheritance-based reputation propagation scheme (\cref{subsec:attack-investigation}).
+The higher the edge weight, the more reputation the sink node inherits from its source node.
+In this way, the POI reputation will correctly reflect the reputation of its root cause nodes.\pgao{probably more explanation}
+
+In \cref{fig:motivate}, we assign the reputation score $0.0$ to the untrusted network connection source indicating that it is untrusted (from our knowlegde), and assign the reputation score $0.5$ to other entry nodes (\ie system libraries) indicating that they are neutral.
+Note that the security analyst has the flexibility to adjust the reputation assignment for entry nodes based on the domain-specific knowledge or external reputation lists (\pgao{add ref}), and \tool supports such flexibility.
+After reputation propagation, the POI reputation is $0.14$. 
+As this number is close to the reputation of the untrusted network source (\ie $0.0$) rather than the system libraries (\ie $0.5$), we can conclude that the untrusted network source is the root cause node of the POI entity.
+We can further very this from the reconstructed attack sequence in the next bullet.
+Furthermore, since the identified root cause node is untrusted (we know this when we assign its reputation), we can conclude that the POI entity is also untrusted and suspicious. 
+
+}
+
+
+
+
+\eat{
+causality analysis may find out seeds, but cannot tell you which one is more important, especially given that there are many libraries
+also, without sysrep, you may assign reputation to seeds, but may not guarantee the proper propagation
+}

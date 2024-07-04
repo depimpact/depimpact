@@ -1,0 +1,102 @@
+\section{Evaluation}
+
+
+We built \tool ($\sim$20K lines of code) upon Sysdig~\cite{sysdig}, and deployed our tool on 2 hosts to collect system auditing events and perform attack investigation. 
+The deployed hosts have 12 active users with hundreds of processes, and are used for various types of daily tasks such as file manipulation, text editing, and software development, which are representative of real-world usage. 
+During evaluation, the deployed hosts continue to resume their routine tasks to emulate the real-world deployment where irrelevant system activities and attack activities co-exist.
+The routine tasks on these machines ensure that enough noise of irrelevant system activities is collected.
+We performed a series of attacks based on known exploits~\cite{exploitdb,liu2018priotracker,kwon2018mci,reduction} in the deployed environment, and applied \tool to 
+investigate these attacks, demonstrating the effectiveness of \tool.
+In total, our evaluations used real system audit logs that contain \emph{100 million} events. 
+%we collected \emph{100 million} real system auditing events for evaluation.
+%Each attack is done with the time gap being at least 1 hour.
+
+%Specifically, we 
+We aim to answer the following research questions:
+
+%\begin{itemize}[noitemsep, topsep=1pt, partopsep=1pt, listparindent=\parindent, leftmargin=*]
+\begin{itemize}
+\item \textbf{RQ1}: How effective is \tool in revealing attack sequences in comparison with other state-of-art techniques? 
+\item \textbf{RQ2}: How do the top-ranked entry nodes affect \tool in revealing attack sequences?
+\item \textbf{RQ3}: How effective is \tool in revealing attack entries?
+\item \textbf{RQ4}: How efficient is \tool in investigating an attack?
+\end{itemize}
+
+% RQ1 aims to measure the effectiveness of using only weights for graph reduction.
+% Its results will provide motivation for the design of \tool.
+%  Its result evaluate the effectiveness of \tool for dependency graph reduction, which plays an essential role in addressing the challenges mentioned in \cref{sec:intro}.
+RQ1 aims to evaluate the overall effectiveness of \tool in dependency graph reduction, and compare \tool with other state-of-the-art causality analysis techniques.
+RQ2 aims to evaluate how the top-ranked entry nodes affect the effectiveness of \tool.
+RQ3 aims to evaluate whether \tool consistently ranks the attack entries 
+%as top-ranked nodes
+upfront, and compare \tool with other baseline approaches.
+RQ4 aims to measure the execution times of \tool and its variation, and compare \tool with other state-of-the-art causality analysis techniques.
+
+\input{tables/s&p/Summary}
+
+\subsection{Evaluation Setup}
+\label{subsec:evalsetup}
+To evaluate \tool, we performed 10 attacks in the deployed environment: 7 attacks based on commonly used exploits and 3 multi-step intrusive attacks based on the Cyber Kill Chain framework~\cite{cyberkillchain} and CVE~\cite{cve}.
+We then collected system auditing events for the attacks and applied \tool to analyze the events. 
+\tool is executed on a server with an Intel(R) Xeon(R) CPU E5-2637 v4 (3.50GHz), 256GB RAM running 64bit Ubuntu 18.04.1.
+Next, we describe the attacks in detail.
+
+
+
+\subsubsection{Attacks Based on Commonly Used Exploits}
+\label{subsub:benign-cases}
+These 7 attacks are used as test cases in prior work~\cite{exploitdb,liu2018priotracker,kwon2018mci,reduction},
+which consist of the following scenarios: 
+%\begin{itemize}[noitemsep, topsep=1pt, partopsep=1pt, listparindent=\parindent, leftmargin=*]
+\begin{itemize}
+    \item \textit{Wget Executable}: A vulnerable server allows the attacker to download executable files using wget. The attacker downloads python scripts and executes the scripts.
+    \item \textit{Illegal Storage}: A server administrator uses wget to download suspicious files to a user's home directory.
+    \item \textit{Illegal Storage 2}: A server administrator uses curl to download suspicious files to a user's home directory.
+    \item \textit{Hide File}: The goal of the attacker is to hide malicious file among the user's normal files. The attacker downloads the malicious script and hides it by changing its file name and location.
+    \item \textit{Steal Information}: The attacker steals the user's sensitive information and writes the information to a hidden file.
+    \item \textit{Backdoor Download}: A malicious insider uses the ping command to connect to the malicious server, and then downloads the backdoor script from the server and hides the script by renaming it.
+    \item \textit{Annoying Server User}: 
+    %A vulnerable server is used by multiple users. 
+    The annoying user logs into other user's home directories on a vulnerable server and writes some garbage data to other user's files. 
+\end{itemize}
+
+
+\input{attacks.tex}
+
+
+
+\myparatight{Dependency Graph Statistics for the 10 Attacks}
+\cref{tab:stasticalSummary} shows the statistics of the generated dependency graphs for the 10 attacks. 
+Columns ``Causality Ana. \# V'' and ``Causality Ana. \# E'' show the number of nodes and edges after performing the causality analysis from the POI events.
+Columns ``Edge Mer. \# V'' and ``Edge Mer. \# E'' show the number of nodes and edges after applying edge merges (\cref{subsubsec:edge-merge}).
+Columns ``Entry Nodes'' and  ``Critical Edge'' show the number of entry nodes and critical edges of the dependency graphs. 
+Column ``Attack Entries'' shows the number of entry nodes that are attack entries.
+%
+We clearly observe that even after edge merges, there still remains a large number of edges in the dependency graphs (707K on average with the max being $3.3$ million edges), which motivates the further pruning provided by \tool.
+
+
+
+
+\input{rq1.tex}
+
+\input{rq2.tex}
+
+\input{rq3.tex}
+
+\input{rq4.tex}
+
+
+\eat{
+\subsection{Evaluation Summary}
+The evaluation results show that \tool is effective in preserving all the critical edges and filtering non-critical edges by choosing the top 2 top-ranked entry nodes to do the forward causality analysis for reduction. 
+On average, the size of the graph produced by \tool is only $4.9\%$ of the dependency graph generated by directly applying causality analysis from the POI event. 
+Such a great reduction result relies on the proper selection of the top-ranked entry nodes for the forward causality analysis. 
+The comparison to 4 other state-of-the-art causality analysis techniques show that \tool is at least 33 times more effective in dependency graph reduction, and does not share the same limitations as these techniques (\eg training on an execution profile and reputation assignment).
+Our results also show that \tool consistently ranks the ground-truth sources at the top ($3.13$ on average). 
+Finally, \tool finishes analyzing an attack within $8$ minutes, which is slightly slower than the state-of-the-art technique NoDoze ($\sim5$ minutes).
+Considering the dependency graph has about $130,000$ edges on average, \tool is highly effective and efficient to reveal the critical edges compared with the manual inspection, which will take much more than $8$ minutes.
+}
+
+
+
+

@@ -1,0 +1,268 @@
+%\usepackage{times}
+\usepackage{graphicx}
+%\usepackage{epsf}
+%\usepackage{verbatim}
+%\usepackage{psfig}
+\usepackage{cite}
+\usepackage{url}
+\usepackage{color}
+\usepackage[dvipsnames]{xcolor}
+\usepackage{alltt}
+%\usepackage{algorithm2e}
+\usepackage{hyperref} %change this later
+\hypersetup{
+	citebordercolor={0 1 0},
+	citecolor=blue,
+	colorlinks=false,
+	filebordercolor={0 .5 .5},
+	filecolor=green,
+	linkbordercolor={1 0 0},
+	linkcolor=blue,
+	menubordercolor={1 0 0},
+	pageanchor=true,
+	pagebackref=true,
+	pdfborder={0 0 1},
+	pdfpagelabels=true,
+	pdftex,
+	plainpages=false,
+	urlbordercolor={0 1 1},
+	urlcolor=blue,
+}
+\usepackage{syntax}
+\usepackage{newfloat}
+\usepackage{multicol}
+\usepackage{amsmath}
+
+
+\usepackage{listings}
+
+
+\definecolor{mygreen}{rgb}{0,0.6,0}
+\definecolor{mygray}{rgb}{0.5,0.5,0.5}
+%\definecolor{mymauve}{rgb}{0.58,0,0.82}
+\renewcommand{\ttdefault}{pcr}
+\renewcommand{\lstlistingname}{Query}
+
+\lstset{
+	backgroundcolor=\color{white},
+	basicstyle=\scriptsize\ttfamily\bfseries,
+	breaklines=true,
+	keepspaces=true,
+	numbers=left,
+	numbersep=4pt,
+	numberstyle=\tiny\color{Gray},
+	rulecolor=\color{black},
+	showspaces=false,
+	showstringspaces=false,
+	showtabs=false,
+	stepnumber=1,
+	stringstyle=\color{black},
+	tabsize=2,
+	language=C++
+}
+\lstset{
+	commentstyle=\color{mygreen},
+	frame=lines,
+	keywordstyle=\color{OrangeRed},
+	keywordstyle=[2]\color{blue},
+	morekeywords={with,return,count,distinct,as,at,from,to,before,after,last,forward,backward,sort,by,asc,desc,in}, % no space
+	keywords=[2] {proc,file,ip}
+}
+\newcommand{\incode}[1]{\lstinline{#1}}
+
+
+\usepackage{subcaption}
+
+\usepackage[labelfont=bf,skip=0pt]{caption}
+%\DeclareCaptionType{copyrightbox}
+%\captionsetup[figure]{font=bf,skip=0pt}%set figure caption
+%\captionsetup[table]{font=bf,skip=0pt}%set table caption
+
+
+
+\newcommand{\Fix}[1]{{\large\textbf{FIX}}#1{\large\textbf{FIX}}}
+%\newcommand{\Fix}[1]{#1}
+\newcommand{\New}[1]{{\large\textbf{New}}#1{\large\textbf{New}}}
+\newcommand{\FixResolved}[1]{#1}
+\newcommand{\realprojects}{a real project}
+\newcommand{\Add}{\CodeIn{add}}
+\newcommand{\AVTree}{\CodeIn{AVTree}}
+\newcommand{\Assignment}[3]{$\langle$ \Object{#1}, \Object{#2}, \Object{#3} $\rangle$}
+\newcommand{\BinaryTreeRemove}{\CodeIn{BinaryTree\_remove}}
+\newcommand{\BinaryTree}{\CodeIn{BinaryTree}}
+\newcommand{\Caption}{\caption}
+\newcommand{\Char}[1]{`#1'}
+\newcommand{\CheckRep}{\CodeIn{checkRep}}
+\newcommand{\ClassC}{\CodeIn{C}}
+\newcommand{\CodeIn}[1]{{\small\texttt{#1}}}
+\newcommand{\CodeOutSize}{\scriptsize}
+\newcommand{\Comment}[1]{}
+\newcommand{\Ensures}{\CodeIn{ensures}}
+\newcommand{\ExtractMax}{\CodeIn{extractMax}}
+\newcommand{\FAL}{field-ordering}
+\newcommand{\FALs}{field-orderings}
+\newcommand{\Fact}{observation}
+\newcommand{\Get}{\CodeIn{get}}
+\newcommand{\HashSet}{\CodeIn{HashSet}}
+\newcommand{\HeapArray}{\CodeIn{HeapArray}}
+\newcommand{\Intro}[1]{\emph{#1}}
+\newcommand{\Invariant}{\CodeIn{invariant}}
+\newcommand{\JUC}{\CodeIn{java.\-util.\-Collections}}
+\newcommand{\JUS}{\CodeIn{java.\-util.\-Set}}
+\newcommand{\JUTM}{\CodeIn{java.\-util.\-TreeMap}}
+\newcommand{\JUTS}{\CodeIn{java.\-util.\-TreeSet}}
+\newcommand{\JUV}{\CodeIn{java.\-util.\-Vector}}
+\newcommand{\JMLPlusJUnit}{JML+JUnit}
+\newcommand{\Korat}{Korat}
+\newcommand{\Left}{\CodeIn{left}}
+\newcommand{\Lookup}{\CodeIn{lookup}}
+\newcommand{\MethM}{\CodeIn{m}}
+\newcommand{\Node}[1]{\CodeIn{N}$_#1$}
+\newcommand{\Null}{\CodeIn{null}}
+\newcommand{\Object}[1]{\CodeIn{o}\ensuremath{_#1}}
+\newcommand{\PostM}{\MethM$_{post}$}
+\newcommand{\PreM}{\MethM$_{pre}$}
+\newcommand{\Put}{\CodeIn{put}}
+\newcommand{\Remove}{\CodeIn{remove}}
+\newcommand{\RepOk}{\CodeIn{repOk}}
+\newcommand{\Requires}{\CodeIn{requires}}
+\newcommand{\Reverse}{\CodeIn{reverse}}
+\newcommand{\Right}{\CodeIn{right}}
+\newcommand{\Root}{\CodeIn{root}}
+\newcommand{\Set}{\CodeIn{set}}
+\newcommand{\State}[1]{2^{#1}}
+\newcommand{\TestEra}{TestEra}
+\newcommand{\TreeMap}{\CodeIn{TreeMap}}
+\newcommand{\smoot}{\textsf{MSeqGen} \xspace}
+
+%\newenvironment{CodeOut}{\begin{scriptsize}}{\end{scriptsize}}
+\newenvironment{CodeOut}{\begin{small}}{\end{small}}
+\newenvironment{SmallOut}{\begin{small}}{\end{small}}
+
+\newcommand{\pairwiseEquals}{PairwiseEquals}
+\newcommand{\monitorEquals}{MonitorEquals}
+%\newcommand{\monitorWField}{WholeStateW}
+\newcommand{\traverseField}{WholeState}
+\newcommand{\monitorSMSeq}{ModifyingSeq}
+\newcommand{\monitorSeq}{WholeSeq}
+
+\newcommand{\IntStack}{\CodeIn{IntStack}}
+\newcommand{\UBStack}{\CodeIn{UBStack}}
+\newcommand{\BSet}{\CodeIn{BSet}}
+\newcommand{\BBag}{\CodeIn{BBag}}
+\newcommand{\ShoppingCart}{\CodeIn{ShoppingCart}}
+\newcommand{\BankAccount}{\CodeIn{BankAccount}}
+\newcommand{\BinarySearchTree}{\CodeIn{BinarySearchTree}}
+\newcommand{\LinkedList}{\CodeIn{LinkedList}}
+
+\newcommand{\Book}{\CodeIn{Book}}
+\newcommand{\Library}{\CodeIn{Library}}
+
+\newcommand{\Jtest}{Jtest}
+\newcommand{\JCrasher}{JCrasher}
+\newcommand{\Daikon}{Daikon}
+\newcommand{\JUnit}{JUnit}
+
+\newcommand{\trie}{trie}
+
+\newcommand{\Perl}{Perl}
+\newcommand{\vpnfilter}{VPNFilter\xspace}
+
+\newcommand{\SubjectCount}{11}
+\newcommand{\DSSubjectCount}{two}
+
+\newcommand{\Equals}{\CodeIn{equals}}
+\newcommand{\Pairwise}{PairwiseEquals}
+\newcommand{\Subgraph}{MonitorEquals}
+\newcommand{\Concrete}{WholeState}
+\newcommand{\ModSeq}{ModifyingSeq}
+\newcommand{\Seq}{WholeSeq}
+\newcommand{\Aeq}{equality}
+
+\newcommand{\Meaning}[1]{\ensuremath{[\![}#1\ensuremath{]\!]}}
+\newcommand{\Pair}[2]{\ensuremath{\langle #1, #2 \rangle}}
+\newcommand{\Triple}[3]{\ensuremath{\langle #1, #2, #3 \rangle}}
+\newcommand{\SetSuch}[2]{\ensuremath{\{ #1 | #2 \}}}
+\newtheorem{definition}{Definition}
+\newtheorem{theorem}[definition]{Theorem}
+\newcommand{\Equiv}[2]{\ensuremath{#1 \EquivSTRel{} #2}}
+\newcommand{\EquivME}{\Equiv}
+\newcommand{\EquivST}{\Equiv}
+\newcommand{\EquivSTRel}{\ensuremath{\cong}}
+\newcommand{\Redundant}[2]{\ensuremath{#1 \lhd #2}}
+\newcommand{\VB}{\ensuremath{\mid}}
+\newcommand{\MES}{method-entry state}
+
+\newcommand{\SmallSpace}{\vspace*{-1.5ex}}
+\newcommand{\Item}{\SmallSpace\item}
+\newenvironment{Itemize}{\begin{itemize}}{\end{itemize}\SmallSpace}
+\newenvironment{Enumerate}{\begin{enumerate}}{\end{enumerate}\SmallSpace}
+
+
+\newcommand{\Small}[1]{{\small{#1}}}
+
+\newcommand{\CenterCell}[1]{\multicolumn{1}{c|}{#1}}
+
+
+
+%%%
+\newcommand{\red}{\textcolor{red}}
+\newcommand{\pgao}[1]{\textsf{\color{blue}{({Pgao: #1})}}}
+\newcommand{\ting}[1]{\textsf{\color{red}{({Ting: #1})}}}
+\newcommand{\pfang}[1]{\textsf{\color{violet}{({Fang: #1})}}}
+
+\newcommand{\argmax}{\operatornamewithlimits{argmax}}
+\newcommand{\myparatight}[1]{\smallskip\noindent{\bf {#1}.}}
+\newcommand{\norm}[1]{\left\lVert #1 \right\rVert_2}
+\newcommand{\sign}{sign}
+\newcommand{\eat}[1]{}
+\newcommand{\eg}{{\it e.g.,}\xspace}
+\newcommand{\ie}{{\it i.e.,}\xspace}
+
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator*{\argmin}{arg\,min}
+
+
+\DeclareFloatingEnvironment[
+% the file extension for the file used to create the list:
+fileext   = logr,% don't use log here!
+% the heading for the list:
+listname  = {List of Grammars},
+% the name used in captions:
+name      = Grammar,
+% the default floating parameters if the environment is used
+% without optional argument:
+placement = !htbp
+]{BNF}
+
+\captionsetup[figure]{font=bf,skip=0pt}%set figure caption
+\captionsetup[table]{font=bf,skip=0pt}%set table caption
+\newcommand{\distance}{2pt}
+\setlength{\textfloatsep}{\distance}%set distance between figure/tables on the top/bottom with text
+\setlength{\floatsep}{\distance}%set distance between figures or tables
+\setlength{\intextsep}{\distance}%set distance between figures/tables in text with text
+\setlength{\dbltextfloatsep}{\distance} %distance between a figure/table spanning both columns and the text;
+\setlength{\dblfloatsep}{\distance} %distance between two figures/tables spanning both columns.
+
+\newcommand*{\thead}[1]{\multicolumn{1}{|c|}{\bfseries #1}} %for table header
+\newcommand*{\theadnoline}[1]{\multicolumn{1}{c}{\bfseries #1}} %for table header
+
+\newcommand{\dcaption}[1]{\caption*{\par\small{#1}}}
+
+\usepackage{hyperref}
+
+\usepackage[capitalize,nameinlink]{cleveref}
+\hypersetup{%
+	bookmarksnumbered, bookmarksopen=true, bookmarksopenlevel=1,%
+}
+
+
+
+
+\crefname{figure}{Figure}{Figures}
+\crefname{listing}{Query}{Queries}
+\crefname{section}{Section}{Sections}
+\crefname{table}{Table}{Tables}
+\crefname{BNF}{Grammar}{Grammars}
+\crefname{algorithm}{Algorithm}{Algorithms}
+\crefname{equation}{Equation}{Equations}

@@ -1,0 +1,23 @@
+\begin{algorithm}
+    \KwIn{Weighted Dependency Graph, $G$}
+    \KwOut{Weighted Dependency Graph, $G$}
+    \While{$\delta > thresold$}{
+        $diff \leftarrow 0.0$  \\
+        \For{$\forall v \in G$}{
+            \If{$v \ is \ seed $}{
+                continue \\
+            }
+            $Set \leftarrow G.incomingEdgeOf(v)$ \\
+            \For{$\forall e \in Set$}{
+                $s \leftarrow e.source$ \\
+                $res \mathrel{+}= s.reputation * e.weight$
+            }
+            $rep \leftarrow res $  \\
+            $diff  \mathrel{+}= |v.reputation - rep|$ \\
+            $v.reputation \leftarrow rep$ \\
+            $\delta \leftarrow diff$
+        }
+    }
+        \caption{Reputation Propagation}
+    \label{alg:reputaionPropagation}
+\end{algorithm}

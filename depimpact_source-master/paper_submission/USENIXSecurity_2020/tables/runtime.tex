@@ -1,0 +1,22 @@
+\begin{table}[!t]
+\centering
+\caption{Performance statistics of \tool}
+\label{tab:runtime}
+\resizebox{0.48\textwidth}{!}{%
+\begin{tabular}{|l|r|r|r|r|r|}
+\hline
+            \textbf{Case}         & \textbf{Causality} & \textbf{Edge Merge} & \textbf{Node Split} & \textbf{Weight} & \textbf{Rep. Propagation} \\ \hline
+penetration-c1       & 0.088                     & 0.001           & 0.002             & 0.013                          & 0.069                              \\ \hline
+penetration-c2       & 0.086                     & 0.000           & 0.000             & 0.027                          & 0.001                              \\ \hline
+password-crack-c1    & 0.186                     & 0.001           & 0.000             & 0.009                          & 0.000                              \\ \hline
+password-crack-c2    & 0.183                     & 0.007           & 0.001             & 0.015                          & 0.001                              \\ \hline
+password-crack-c3    & 0.256                     & 0.152           & 0.001             & 0.022                          & 0.000                              \\ \hline
+data-leakage         & 0.568                     & 0.450           & 0.019             & 1.697                          & 0.031                              \\ \hline
+command-injection-c1 & 0.246                     & 0.001           & 0.001             & 0.020                          & 0.000                              \\ \hline
+command-injection-c2 & 0.215                     & 0.025           & 0.006             & 0.668                          & 0.008                              \\ \hline
+vpnfilter-c1         & 0.179                     & 0.002           & 0.000             & 0.006                          & 0.000                              \\ \hline
+vpnfilter-c2         & 0.162                     & 0.007           & 0.000             & 0.053                          & 0.000                              \\ \hline
+\textbf{avg}         & \textbf{0.21}            & \textbf{0.06}  & \textbf{0.003}   & \textbf{0.25}                 & \textbf{0.01}                     \\ \hline
+\end{tabular}
+}
+\end{table}

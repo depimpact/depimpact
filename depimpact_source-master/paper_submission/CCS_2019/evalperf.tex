@@ -1,0 +1,9 @@
+\input{tables/runtime.tex}
+
+\subsubsection{Performance of \tool}
+To understand the performance of \tool in investigating real attacks, we measure the execution time of \tool on the attack cases.
+\tool starts the computation by parsing a log ($92.252s$ averagely) and building a global graph representation ($3.277s$ averagely).
+\cref{tab:runtime} shows the execution time for the remaining components of \tool. 
+Besides the steps shown in the preprocessing step, \emph{Causality Analysis}, \emph{Edge Merge}, and \emph{Node split} require $0.21s$, $0.06s$, and $0.003$ on average. 
+Note that \emph{Weight Computation} and \emph{Reputation Propagation} only requires $0.25s$ and $0.01s$ on average.
+In summary, the total time for running an analysis is about $2$ minutes, but the major cost (\ie log parsing) can be improved by adopting caching or database indexing~\cite{gao2018aiql}.

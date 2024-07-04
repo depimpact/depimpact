@@ -1,0 +1,103 @@
+\section{Discussion}
+\label{sec:discussion}
+
+\eat{
+\subsection{General Framework for Revealing More Attacks}
+\tool provides a general framework to assign weights to dependency edges based on a set of features, 
+and computes relevance scores based on edge weights.
+Our evaluations have shown the effectiveness of \tool using the features (\cref{subsubsec:feature-extraction}) for the commonly used exploits and real attacks.
+To reveal the types of attacks that present different properties, a different set of features that describe these properties can be provided to \tool,
+and the discriminative feature projection will be able to automatically compute new weights for revealing the attacks. 
+}
+
+\subsection{Evasion Attacks}
+Existing causality analysis techniques, such as NoDoze~\cite{hassan2019nodoze}, leverage execution profiles and reputations of entities (\eg IP and file reputations) to identify anomaly edges.
+As shown in \cref{subsec:rq1}, attackers may hide their attack steps in benign events and thus their steps will be eliminated as other benign events, or try to abuse the reputation system to conceal their attack steps.
+Unlike existing techniques, \tool will not suffer from this type of attacks since \tool does not rely on execution profiles and reputations of system entities.
+
+To abuse our weight computation and back-propagation techniques, attackers need to compromise or cooperate with commonly used system processes for their attack steps, \eg data copying. 
+For example, the attackers can have their malicious payload copied over many times by a commonly used system process, such as \incode{cp}, before writing to a malicious script.
+Then, to hide these copies, the attacker can control the same process to copy some garbage data to another irrelevant processes with larger data amount, and make this irrelevant process write data to impact the malicious script in the POI event.
+To do so, the attackers will have to compromise or cooperate with all other processes along the way to the POI event, which is very likely to trigger other alerts.
+Even if the attackers succeed in all these steps without being detected, we can still mitigate such attacks by applying \tool on each of the write event (\ie all the small writes of the malicious payload and the write of the garbage data) to the malicious script, and correctly identifying the attack sequences for the writes of the malicious payloads.
+We may also verify the integrity of the commonly used processes (\eg checking control-flow integrity~\cite{cfi,cfi2}) or other process-based anomaly detection techniques~\cite{processanomaly,processanomaly2} to help distinguish these writes.
+
+Alternatively, the attackers may use a set of different processes to accomplish their goals, and we can use rule-based techniques to limit or forbid unknown processes for moving data around the system.  
+In any case, \tool significantly raises the bar for the attackers to hide their attack steps. 
+
+
+
+
+
+%
+
+
+%\pgao{First, a given POI might correspond to an event that has no data amount attribute; like a rename system call or an unlink system call for deleting a critical file. }
+
+
+%\pgao{fanout feature; priotracker => does not prune, but prioritize}
+
+
+
+\subsection{Design Alternatives}
+For feature extraction, besides the features proposed, the design of \tool supports easy incorporation of other features according to specific forensic investigation needs.
+%
+For edge weight computation, one alternative is to train a binary classifier using the features and output a probability score as the edge weight.
+However, such supervised learning-based approach faces significant limitations in our problem context:
+(1) as some of our features are computed with respect to the specific POI, the classification model learned for one type of attack can hardly generalize to other types of attacks with different POIs;
+(2) such approach typically requires large amount of training data, while our problem context is highly imbalanced in which critical edges are limited. 
+%
+Among unsupervised learning-based approaches, approaches based on anomaly detection~\cite{anomalysurvey} could be a substitution for KMeans clustering, and there could be alternatives for LDA to achieve discriminative dimensionality reduction~\cite{Mika99fisherdiscriminant,sugiyama2006local}.
+We plan to explore these options in future work.
+
+%\pgao{maybe talk about local clustering approach}
+
+
+\subsection{Runtime Performance Improvement}
+The performance of \tool may benefit from database optimization and parallelization. 
+Backward and forward causality analyses can be improved by adopting the database optimization techniques to speed up the search~\cite{gao2018aiql,gao2018saql},
+and can be parallelized by searching the dependency separately. 
+Feature extraction for different edges is independent and can also be parallelized.
+%In the scenarios where multiple hosts are involved, dependencies on each host can be precomputed in parallel and thus cross-host causality analysis becomes the concatenation of multiple generated dependency graphs. 
+Back-propagation (\cref{eq:reputation}) can be converted into a matrix-vector product form to save CPU cycles.
+Further parallelization is possible by leveraging ideas similar to parallelizing PageRank~\cite{gleich2004fast,kohlschutter2006efficient}. 
+We plan to explore these ideas in future work.
+
+
+\subsection{Multi-Host Attack Investigation}
+\tool accepts a backward dependency graph produced by causality analysis and identifies the critical component of the graph.
+Attack steps on multiple hosts can be analyzed by performing cross-host causality analysis using existing techniques~\cite{liu2018priotracker,backtracking2},
+which produce causality graphs that include special network connection edges to represent connections among multiple hosts.
+These connection edges ensure that the dependency flows are not cut off across hosts. 
+\tool can directly take these dependency graphs as input and work with them seamlessly. 
+In particular, in our evaluations, our multi-step intrusive attacks in \cref{subsubsec:attack-cases} involve communications between two machines, C2 server and the victim machine. 
+To investigate the attack on the victim machine, we used the system auditing events on the victim machine for evaluation.
+
+
+
+\eat{
+affect our analysis that identifies a subgraph containing events that are highly relevance to the POI event (\eg an alert) and the ground-truth sources.
+
+
+in practice, the attacker, with some knowledge about the proposed system, may optimize its attack strategy to manipulate the proposed features of certain edges. 
+For example, (1) to have a lower temporal relevance feature, the attacker may extend its malicious activities during weeks/months to remain stealth, or (2) to have a lower data size relevance feature, the attacker may perform the exfiltration using multiple processes and each process is only associated with small data size. 
+%
+However, note that the goal of this work is not to design highly robust features to accurately detect malicious activities, which is an orthogonal research question and is very challenging.
+Instead, this work targets the design of an effective approach that identifies parts of dependencies that are actually related to a given POI, which is challenging due to the large imbalance between critical edges and non-critical edges.
+%
+As shown in \cref{subsubsec:rq1}, directly using the features to identify critical edges can lead to many false positives, which in turn demonstrates that it is fairly challenging to design highly effective features.
+In contrast, \tool employs novel methods to take advantage of the noisy features (\ie edge weight computation, relevance score propagation, entry node ranking, forward causality analysis) and achieves a much higher graph reduction rate.
+
+
+
+The construction of
+causality graphs can be potentially parallelized with distributed
+computing. Any individual branch to be explored can be
+processed separately; branches may bear different priorities
+and therefore are assigned with corresponding computing
+resources; dependencies on each host can also be pre-computed
+in parallel and cross-host tracking thus becomes the concatenation of multiple generated graphs. Nonetheless, the massive
+and pervasive dependencies among system events bring significant challenges to parallel processing, and therefore distributed
+causality tracking by itself is an interesting research direction
+that requires non-trivial efforts.
+}

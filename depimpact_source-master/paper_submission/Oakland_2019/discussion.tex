@@ -1,0 +1,32 @@
+\section{Discussion}
+
+\subsection{Alternative Approaches for Weight Computation}
+% Accurately computing the edge weights to distinguish critical edges from non-critical edges is the key pre-requisite for achieving good graph reduction performance (surfacing critical edges from non-critical edges) and good reputation propagation performance (identifying benign and malicious payloads by propagating reputation from seeds). 
+As shown in \cref{subsec:eval-results}, the \emph{Local Clustering and Projection} approach employed in \tool achieves the best performance in all the compared weight computation approaches, especially much better than empirically setting a fixed projection vector. As mentioned in \cref{subsubsec:weight-computation}, supervised learning approaches face serious generalization problems due to the lack of enough training samples and the highly specialized context introduced by the POI event.
+For unsupervised learning approaches, approaches based on anomaly detection~\cite{anomalysurvey} might be a substitution for KMeans.
+In order to compute the best projection vector, we extend the standard LDA when the within-cluster scatter matrix $S_w$ is singular. We acknowledge that there might be other ways to extend the standard LDA and other methods to achieve discriminative dimensionality reduction~\cite{Mika99fisherdiscriminant,sugiyama2006local}, which we leave for future exploration.
+
+
+
+\subsection{Parallelization}
+Part of the construction of weighted dependency graphs can be potentially parallelized with distributed computing. 
+The dependency graph produced by traditional causality analysis~\cite{backtracking,backtracking2} can be parallelized by
+searching dependency separately.
+The feature generation for each edge is independent and is a good candidate for parallelization.
+In the scenarios where multiple hosts are involved, dependencies on each host can also be pre-computed in parallel and cross-host causality analysis thus becomes the concatenation of multiple generated dependency graphs. 
+Nonetheless, the weight computation and the reputation propagation cannot be easily separated due to dependencies on the computation results of a set of nodes,
+and the massive dependencies among system events also pose significant challenges to parallel processing.
+Thus, weighted causality analysis with parallelization is an interesting research direction that requires non-trivial efforts.
+
+\subsection{Attacks Against the Proposed Framework}
+In practice, the attacker, with some knowledge about the proposed system, may optimize its attack to stay under cover. For instance, (i) to have a low time weight, the attacker may inject its malicious file earlier but start its attack later, or (ii) to have lower data weight, the attacker may attack using multiple processes each with small data amounts (\ie distribute the malicious behavior to multiple processes). An attacker may also choose to gain reputation first before attacking the system or stay under cover and attack probabilistically. In this paper, we do not consider the potential attacks against the reputation system and we leave them for future work.
+
+
+\subsection{Industrial View}
+Because APT attacks consist of many small steps over a long period of time, even though security experts can get the system wide log, it is time-consuming to track and reconstruct the attack and hard to discover the complete attack steps. Moreover, depends on the individual’s capability, the quality of the analysis may vary. \tool not only reduces the time consumption of the analysis but also removes a dependency on the capability of the security experts. Hence, by applying \tool, we can guarantee a certain level of analysis result automatically. The automated process is vital to keep the security level as high as possible. 
+Since it is possible to reconstruct the attack steps in an individual system automatically, it is highly likely to be applicable to a small scale business that is not affordable to get help from security experts when security incident happens.
+
+\tool can be useful not only for post-mortem analysis but also for capturing symptoms before the security incident. According to the recent malware report ~\cite{McAfeeLabs:2018report}, fileless malware such as PowerShell attack is surging 432\% in 2017. The fileless malware does not leave any files in the system so the anti-malware solution is experiencing difficulties. System-wide logging can capture the activity of the process by observing the reputation of connected IP address periodically, \tool can give an early warning to the user before or during the attack on the fly.
+
+% In places where there are multiple servers, such as a large-scale business, this work can guarantee a level of security through automation and help security experts to respond promptly. The prompt response will help to reduce the financial damage when a security incident happens.
+

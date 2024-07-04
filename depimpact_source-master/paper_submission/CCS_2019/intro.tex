@@ -1,0 +1,231 @@
+\section{Introduction}
+
+% Flow: APT is severe. Recent approaches based on system monitoring. Collection of system monitoring data enables attack investigation.
+Advanced Persistent Threat (APT) attacks~\cite{fireeye:anatomy,aptsymantec} have plagued many well-protected companies, causing significant 
+%financial 
+losses~\cite{ebay,opm,target,homedepot,ya:yahooleak,equifax,marriott}.
+These APT attacks often infiltrate into target systems in multiple stages 
+and span a long duration of time with a low profile, posing challenges for efficient detection and investigation.
+To counter these advanced attacks, \emph{ubiquitous system monitoring} emerges as an important approach for monitoring system activities and performing attack investigation~\cite{backtracking,backtracking2,wormlog,logtracking,mcitracking,liu2018priotracker,hassan2019nodoze,gao2018aiql,gao2018saql}.
+System monitoring collects system-level auditing events about system calls,
+and the collected data further enables the security analyst to unfold these attacks to identify the root causes and the ramifications of attacks,
+%(\ie attack investigation), 
+which is critical for performing timely system recovery and preventing future compromise.
+
+% Flow: Existing approaches face challenges in automatic attack investigation.
+While the research on attack investigation based on audit logs
+%audit logging and forensics 
+shows great potential, there has been little work in automating such process.
+%the process of attack investigation. 
+Existing 
+%attack investigation 
+solutions based on causality analysis~\cite{backtracking,backtracking2,taser,intrusionrecovery,liu2018priotracker} and behavior querying~\cite{gao2018aiql,gao2018saql} require non-trivial efforts of manual inspection, 
+which are labor-intensive and lack of automation.
+%and error-prone.
+%thus facing major limitations in automating the attack investigation process.
+%
+Causality analysis approaches assume causal relationships between system entities (\eg files, processes, and network connections)
+%between system entities (\eg processes) and system resources (\eg files and network sockets) 
+that are involved in the same system call event (\eg a process reading a file), and based on such assumption, these approaches organize the system call events in a system dependency graph, with nodes being system entities and edges being events.
+By inspecting such a dependency graph, the security analyst can trace from POI (point-of-interest) entities to identify the root causes and reconstruct the attack sequence.
+%and the ramifications of attacks.
+%of the attacks (\ie backward causality tracking) and understand the damages of the attacks (\ie forward causality tracking). 
+The major limitation of causality analysis, however, is the significant amount of manual efforts in inspecting a daunting number of edges (typically, tens of thousands) due to the dependency explosion problem~\cite{beep,reduction,reduction2}.
+%
+Behavior querying approaches~\cite{gao2018aiql,gao2018saql} leverage domain-specific languages (DSLs) to investigate the attack patterns of system call events. 
+The construction of behavior queries, however, requires that the security analyst masters the syntax of DSLs (typically by going through a steep learning curve) to construct behavior queries and manually inspects the potentially large query results.
+%Detection-based approaches~\cite{malwaresystemcall} often report numerous warnings that require non-trivial manual efforts in investigating the warnings.
+
+
+
+% Flow: 2 observations. Existing reactively, manually. We proactively, automatically
+\myparatight{Key Insight: Proactively Revealing Critical Edges}
+In this work, we aim to bridge the gap between the pressing need for automating the attack investigation process and the lack of practical solutions.
+%that demonstrate practical efficacy for such purpose.
+We have two \emph{key observations}: 
+(1) on a large dependency graph constructed from POI,
+%entity, 
+a small number of \emph{critical edges} that represent the attack sequence (\eg events that create and execute malicious payloads) are typically buried in many non-critical edges (\eg events that perform irrelevant system activities);
+(2) compared to non-critical edges, critical edges typically present a different set of properties (\eg amount of data flow) that are more correlated with the POI.
+%(\eg the example attack in \cref{subsec:motivating-example}).
+%
+Unlike existing 
+%causality analysis 
+approaches~\cite{backtracking,backtracking2,taser,intrusionrecovery,liu2018priotracker} that \emph{reactively} leverage such 
+%``imbalance" 
+observations by requiring intensive manual inspection of the large dependency graph to reveal critical edges,
+we seek to \emph{proactively leverage such %``imbalance" 
+observations} by designing an approach to \emph{automate the process of revealing critical edges and associating critical edges with POI entities for POI diagnosis}, which are the two key steps for attack investigation.
+
+
+
+% Flow: 3 steps of SysRep. 3 usage scenarios
+\myparatight{Contributions}
+We propose \tool, a novel approach that facilitates automatic attack investigation via weight-aware reputation propagation from system monitoring.
+%
+Given a POI to be investigated, \tool first applies causality analysis to construct a dependency graph for the POI and identify a set of entry nodes (\ie nodes on the dependency graph without incoming edges).
+Next, to automatically reveal critical edges from non-critical edges, \tool employs novel methods to compute discriminative weights for edges, so that critical edges and non-critical edges can be easily distinguished using their weight scores.
+The higher weights the more impact on the POI.
+Finally, to automatically associate entry nodes with the POI through critical edges, \tool employs a novel weight-aware reputation propagation scheme that propagates reputation from entry nodes (the reputation is assigned by the security analysts) along the weighted edges to infer POI reputation, which characterizes the impact of the entry nodes to the POI.
+Specifically, for entry nodes that represent files, processes, or IPs, the security analyst assigns the reputation based on the domain knowledge about the entities (as these entry nodes have no incoming edges for receiving reputation): high reputation values for trusted sources (\eg verified binaries), low reputation values for 
+%suspicious 
+untrusted sources (\eg unknown IPs and vulnerable binaries), and neutral reputation values for neutral sources like system libraries since they may be used by both benign and malicious applications.
+Note that this process can be largely automated by compiling a list of verified binaries and libraries or leverage existing reputation systems~\cite{ipreputation1,ipreputation2}.
+
+
+The POI reputation can be used to (1) identify the root cause nodes among other entry nodes that result in the POI by comparing the POI reputation with the entry node reputations, and (2) determine the trustworthiness/suspiciousness of the POI based on whether the root cause nodes are trusted sources
+%(\eg verified binaries and trusted websites) 
+or untrusted sources.
+%(\eg suspicious executables and untrusted websites). 
+The node reputation and edge weights can be used seamlessly to reconstruct the attack sequence, which details how the POI was created.
+%
+Synergistically, \tool significantly reduces the efforts of manual inspection and facilitates automatic attack investigation.
+
+%\tool significantly reduces the efforts of the security analyst by converting the heavyweight\pgao{maybe a better word?} manual dependency graph inspection (usually 100,000+ edges) into the lightweight reputation assignment to seed sources (much fewer than edges).
+
+
+% Flow: Three challenges: (1) should not use single feature; (2) should not use a score distribution fashion + bad consequences
+\myparatight{Challenges}
+The two key steps to enable \tool are (1) computing effective edge weights to reveal critical edges, and
+%from non-critical edges, and 
+(2) performing effective weight-aware reputation propagation to infer POI reputation.
+However, there are two major challenges:
+
+%There are two major challenges in enabling effective weight-aware reputation propagation from system monitoring:
+
+\emph{(1) Large Number of Non-Critical Edges and Diversified Attack Scenarios:} Due to the large number of non-critical edges, revealing critical edges essentially is the problem of ``finding a needle in a haystack". Furthermore, critical edges in different attack scenarios typically present different properties, and thus relying on a single feature (\eg node degree) to compute edge weights is often insufficient to oversee a diversified set of attack scenarios.
+As such, how to extract good features that capture the fundamental differences between critical edges and non-critical edges and how to combine these features into a discriminative weight become a key challenge.
+
+%(\eg fanout of the edges~\cite{liu2018priotracker}\footnote{They also use reference models, but the reference models account for mere 27\% of the priority score~\cite{liu2018priotracker}.}) 
+%For example, the fanout of edges fails to assign a high priority score to an edge that creates a malware script from a browser, which also writes to many other files and thus has many outgoing edges.
+
+\emph{(2) Long Dependency Paths:} Due to the multi-stage nature of APT attacks~\cite{fireeye:anatomy,aptsymantec}, the dependency paths from entry nodes to the POI often have many hops. 
+If a node propagates its reputation in a distribution fashion (\ie distributes its reputation along outgoing edges in portions)~\cite{Page:techreport:1998,cao2012sybilrank}, the reputation will degrade rapidly in the middle of the path, failing to characterize the impact of entry nodes on POI.
+As such, how to design a good weight-aware reputation propagation scheme that prevents the reputation degradation on long paths becomes another key challenge.
+
+
+% Flow: challenge 1 -> seed assignments; challenge 2 -> 3 features + ML-based combination; challenge 3 -> aggregation style (local in-edges)
+\myparatight{Novel Techniques of \tool}
+To address the aforementioned challenges, \tool employs two novel techniques:
+
+\emph{(1) Discriminative Feature Projection:} 
+To compute edge weights,
+%discriminative weights for edges, 
+instead of relying on a single ``golden" feature, \tool extracts three discriminative features from every event edge (\ie relative data amount difference, relative time difference, and concentration degree) that capture the properties of critical edges from three different aspects (\ie data flow, time, and structure) (\cref{subsec:feature-extraction}).
+%
+
+To compute a single discriminative weight score from the three features,
+\tool clusters the incoming edges of each node into two groups, \ie one group for critical edges and other group for non-critical edges based on our insight. 
+Then, \tool employs a novel \emph{discriminative feature projection} scheme based on Linear Discriminant Analysis (LDA)~\cite{Mika99fisherdiscriminant} to compute an optimal projection vector, so that the projected values of critical edges and the projected values of non-critical edges are maximally separated.
+The normalized projected values will then serve as as edge weights (\cref{subsec:weight-computation}).
+
+% \pgao{not sure if need to expect local clustering and local normalization}
+
+%\tool adopts ideas from dimensionality reduction and discriminant analysis
+
+\eat{
+\begin{itemize}[noitemsep, topsep=1pt, partopsep=1pt, listparindent=\parindent, leftmargin=*]
+    \item \emph{Relative Data Amount Difference:} this feature measures the distance between the size of data processed by the event and the size of POI entity.
+    \item \emph{Relative Time Difference:} this feature measures the distance between the timestamps of the event and the POI event.
+    \item \emph{Concentration Degree:} this feature measures the ratio of the indegree to the outdegree of the involved system entity.
+%subject
+%This feature is particularly useful for smoothing out the impacts of system libraries with no incoming edges and long-running processes with many outgoing edges.
+\end{itemize}
+}
+
+\eat{
+instead of adopting a standard 
+%supervised learning
+classification-based approach (\ie training a classifier using the three features and outputting a score as the weight), which has limited generalization capability in our problem context (\eg due to the very limited training data, highly imbalanced classes, etc.), 
+\tool leverages ideas from dimensionality reduction and discriminant analysis.
+Rather than computing a projection vector globally, which may result in serious bias due to the large number of edges, 
+\tool employs a novel \emph{discriminative local feature projection} mechanism based on an extended version of Linear Discriminant Analysis (LDA)~\cite{Mika99fisherdiscriminant}.
+For each node, the mechanism computes a discriminative projection vector locally for all its incoming edges and computes a weight for each incoming edge by projecting its three features.
+This mechanism helps avoid the undesired impacts of unlinked edges to the node, while ensuring that the weights of critical edges are maximally separated from the weights of non-critical edges (\cref{subsec:weight-computation});
+}
+
+
+
+% \pgao{weight-aware}
+\emph{(2) Inheritance-Based Reputation Propagation:} 
+To prevent the rapid degradation of reputation on long dependency paths, \tool propagates reputation in an \emph{inheritance fashion} (\cref{subsec:attack-investigation}):
+%rather than a distribution fashion:
+the reputation of a source node gets inherited to all its sink nodes rectified by the edge weights.
+%rather than distributed to the sink nodes in portions.
+%when \tool propagates the reputation from a source node $u$ to a sink node $v$ along an edge $e(u, v)$ (the direction of $e$ indicates the direction of data flow), $v$'s reputation will inherit $u$'s reputation mutiplied by the weight of $e(u, v)$. 
+Such propagation scheme ensures that the reputation from root cause nodes through the critical edges can be preserved even when propagated along long paths.
+
+% \pgao{give more insights on what this rp scheme enables and how the poi rp can be used}
+
+%In this way, the reputation from root cause nodes can be preserved (as these nodes are connected to critical edges with high weights\pgao{need revise}) when propagated along long dependency paths .
+
+%\tool ensures that each node's reputation would not exceed the maximum reputation of any of its sources nodes.
+
+
+
+% Flow: 3 RQs
+\myparatight{Evaluation}
+We implemented and deployed \tool ($\sim$8000 lines of code) in a server to collect real system monitoring data,
+and evaluated \tool in both benign and malicious scenarios.
+We performed 8 tasks that inject benign and malicious payloads through key system interfaces (\eg web downloads and shell executions)
+and 5 real 
+%APT 
+attacks in the deployed environment,
+and applied \tool to perform 
+%automatic 
+attack investigation.
+During our evaluation, the server continues to resume its routine tasks to emulate the real-world deployment where irrelevant system activities and attack activities co-exist.
+In total, we collected ${\sim}2$ billion system auditing events.
+%for the attacks.
+
+For evaluation purposes, we set the range of edge weight to be $(0.0,1.0]$,
+and the range of the reputation score to be $[0.0,1.0]$, with $0.0$ for untrusted sources,
+%suspicious sources, 
+$1.0$ for trusted sources,
+%sources, 
+and $0.5$ for neutral sources like system libraries.
+Our evaluation results show that \tool is effective in revealing critical edges (average weight 0.89) from non-critical edges (average weight 0.06) for all cases.
+To evaluate the effectiveness of reputation propagation, we measure the reputation scores of POI, which are expected to be close to $1.0$ for benign scenarios and $0.0$ for malicious scenarios.
+The results show that \tool accurately propagates the reputation scores from trusted and untrusted
+%suspicious 
+sources to the POI entities (averagely $0.99$ for benign scenarios and averagely $0.03$ in malicious scenarios).
+
+We also perturb the reputation scores for entry nodes using a uniform random sampling from $\lbrack0.2,0.8\rbrack$ for system libraries, $\lbrack0.0,0.2\rbrack$ for untrusted sources, and $\lbrack0.8,1.0\rbrack$ for trusted sources to evaluate the resilience of \tool against attacks the on reputation assignment.
+The results show that the edge weights of \tool prevent the perturbed reputation of system libraries from adversely impacting the POI, and the POI reputation is always strongly correlated to the reputation of root cause nodes.
+
+Our performance evaluations show that \tool can finish the analysis for a real attack case within two minutes, where the log parsing (accounting for 75\% of the execution time) can be easily optimized by adopting cache or databases~\cite{gao2018aiql}.
+
+
+
+\eat{
+\pgao{Need to restructure the following paras based on our new RQs}
+
+\emph{Reputation Propagation}.
+To evaluate the effectiveness of \tool in reputation propagation, we compare the reputation scores of POI entities against the expected values ($0.0$ for malicious scenarios and $1.0$ for benign scenarios).
+Our results show that \tool is able to accurately propagate the reputation scores from trusted and suspicious sources to the POI entities (averagely $0.99$ for benign scenarios and averagely $0.03$ in malicious scenarios).
+
+To demonstrate the effectiveness of \tool's discriminative local feature projection, we compare \tool with three other weight computation approaches:
+(1) \lpfixed, which leverages a fixed set of parameters for projection;
+(2) \lpglobal, which groups all the edges into two clusters and derives a projection to separate the edges in different clusters;
+(3) \lpglobalplus, which is the same as \lpglobal but removes outlier edges. 
+The results show that \tool on average improves \lpfixed, \lpglobal, and \lpglobalplus by 64.60\%, 79.22\%, 70.36\%, respectively, in benign scenarios and malicious scenarios.
+We also evaluate the robustness of \tool. We allow the libraries' reputation could be any random number between 0.2 and 0.8 and allow the seed's reputation could be any number in a range (e.g. $\left[0.2, 0.8\right]$). The POI's reputation only has a small change. This prove the robustness of \tool. \pfang{Here is summary result about different reputation setting}
+
+We also compare \tool with the edge priority computation used in the state-of-the-art causality analysis work  PrioTracker~\cite{liu2018priotracker}.
+\pgao{Note that PrioTracker has a different goal xxx} For fair comparison, we adapt their edge priority computation algorithm to assign weights to edges and apply the same propagation algorithm to propagate reputation scores. 
+The results show that \tool achieves 57.22\% improvement over PrioTracker in benign scenarios and average 87.22\% improvement over PrioTracker in malicious scenarios. 
+% Compared with \lpfixed, \tool achieves 34.67\% improvement in benign scenarios and average 94.53\% improvement in malicious scenarios. \zt{Why \lpfixed again?}
+
+\emph{Attack Sequence Reconstruction}.
+To evaluate the effectiveness of \tool in attack sequence reconstruction, 
+we choose a range of threshold values to prune edges whose weights are below the threshold, and inspect the remaining edges to measure the possible loss of critical edges.
+The results show that for all attacks, the reputation scores of critical edges (mostly $>0.9$) are well separated from the non-critical edges (mostly $<0.1$),
+demonstrating the effectiveness of our discriminative weights. 
+Additionally, setting threshold values within $\lbrack 0.1,0.25 \rbrack$ can prune more than 90\% of the irrelevant edges while preserving the critical edges.
+
+\pgao{PF: please summarize new eval results}
+
+
+
+\pgao{To the best of our knowledge, \tool is the first work that propagates reputation xxx }
+}

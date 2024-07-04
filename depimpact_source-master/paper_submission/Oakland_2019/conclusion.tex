@@ -1,0 +1,7 @@
+\section{Conclusion}
+We have presented a novel causality analysis approach, \tool, which builds a weighted dependency graph from system auditing events that record the information of system calls.
+\tool is designed to address the two major problems faced by the causality analysis: dependency explosion and non-trivial efforts in graph inspection.
+\tool generates three novel types of discriminative features (\ie relative time difference, relative data amount differences, and concentration degree) for the dependencies among system auditing events, and leverage these features to compute weights for each dependency. 
+Based on these weights, \tool can surface attack provenance by hiding low weighted edges.
+\tool further propagates reputation from the seed nodes in the weighted dependency graph to automatically determine whether the reputation of a target file is similar to untrusted sources, saving the efforts in graph inspection.
+The evaluations on representative cases for key system interfaces and steps in real attacks demonstrate the effectiveness of \tool in addressing dependency explosion and graph inspection.

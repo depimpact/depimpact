@@ -1,0 +1,31 @@
+\begin{table}[]\
+\centering
+    	\caption{Graph reduction results for PHASEs I and II}
+    	\label{tab:Reduction}
+    	\resizebox{0.48\textwidth}{!}{%
+            \begin{tabular}{|l|r|r|r|r|}
+            \hline
+            \thead{Attacks}                & \thead{PH.I V} & \thead{PH.I E} & \thead{PH.II V} & \thead{PH.II E} \\ \hline
+            3File      & 225                  & 25211             & 225            & 596         \\ \hline
+            2File             & 221                  & 21100             & 221            & 537         \\ \hline
+            curl                  & 212                  & 15142             & 212            & 460         \\ \hline
+            shell\_script           & 229                  & 21124             & 229            & 637         \\ \hline
+            python\_wget          & 162                  & 10597             & 162            & 283         \\ \hline
+            scp                   & 60                   & 7912              & 60             & 78          \\ \hline
+            shell\_wget           & 115                  & 4998              & 115            & 158         \\ \hline
+            wget                  & 217                  & 19078             & 217            & 500         \\ \hline
+            command-injection-c1      & 51                   & 65                & 51             & 51          \\ \hline
+            command-injection-c2      & 1438                 & 9713              & 1438           & 2738        \\ \hline
+            data-leakage       & 4252                 & 151200            & 4252           & 4261        \\ \hline
+            password-crack-c1 & 35                   & 731               & 35             & 36          \\ \hline
+            password-crack-c2 & 61                   & 2477              & 61             & 73          \\ \hline
+            password-crack-c3 & 25                   & 58426             & 25             & 36          \\ \hline
+            penetration-c1 & 60                   & 314               & 60             & 63          \\ \hline
+            penetration-c2 & 30                   & 139               & 30             & 68          \\ \hline
+            vpnfilter-c1      & 14                   & 274               & 14             & 14          \\ \hline
+            vpnfilter-c2      & 16                   & 598               & 16             & 18          \\ \hline
+            avg & 412.39 & 19394.39 & 412.39 & 589.28 \\ \hline
+            \end{tabular}
+        }
+    % \dcaption{ .}
+\end{table}

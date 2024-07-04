@@ -1,0 +1,16 @@
+\begin{abstract}
+
+
+The need for countering Advanced Persistent Threat (APT) attacks has led to solution that ubiquitously
+monitor system activities in each host, and perform timely attack investigation over the monitoring data.
+However, existing solutions face major limitations in automating the process of attack investigation:
+(1) causality analysis requires security analysts to inspect a large system dependency graph, 
+where nodes represent system entities and edges represent the dependencies among system auditing events;
+(2) behavior querying requires security analysts to master the query syntax and manually construct behavior queries to search attack patterns.
+
+In this work, we propose a novel approach, \tool, which makes the first step towards automatic attack investigation.
+\tool assigns discriminative weights to the edges in a system dependency graph to distinguish \emph{critical edges} that are important to revealing the attack sequence, and propagates reputation values from seed sources to suspicious system entities.
+The reputation propagation enables \tool to automatically determine whether a system entity came from a trusted or a suspicious source, and the edge weights enable \tool to automatically reveal critical edges for reconstructing the attack sequence.
+The evaluations on a wide range of attacks on key system interfaces and real 
+APT attacks demonstrate the effectiveness of \tool in reputation propagation and attack sequence reconstruction. 
+\end{abstract}

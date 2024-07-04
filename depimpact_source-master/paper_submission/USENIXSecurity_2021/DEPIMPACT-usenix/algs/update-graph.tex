@@ -1,0 +1,24 @@
+% \begin{algorithm}[t]
+% 	\KwIn{A dependency Graph and.\\
+% 		list1 is a list of outgoning edges of the source except edges whose object is V. \\
+% 		list2 is a list containing edges between S and V}
+% 	\textbf{function}: UndateGraph$\textit(G, list1, list2)$\\
+% 	$list \leftarrow$ empty list of vertex\;
+% 	\For{$ e \in list2$}{
+% 		$u \leftarrow split(S)$\;
+% 		$list$ add $u$\;
+% 		$G$ add $u$\;
+% 		$G$ add a new edge from $u$ to $V$\;
+% 	}
+% 	\For{$u \in list$}{
+% 		\For{$e \in list1$}{
+% 			$G$ add a new edge from $u$ to the object of $e$\;}
+% 	}
+% 	\For{$u \in list$}{
+% 		\For{$e \in$ in the incoming edges of $S$}{
+% 			$G$ add a new edge from the source of $e$ to $u$\;}
+% 	}
+% 	remove $S$, the incoming and outgoing edges of $S$ from the $G$\;
+%     \caption{UpdateGraph}
+% 	\label{alg:update}
+% \end{algorithm}

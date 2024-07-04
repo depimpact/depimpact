@@ -1,0 +1,39 @@
+
+\section{Related Work}
+\label{sec:literature}
+
+In this section, we survey three categories of related work.
+
+\myparatight{Causality Analysis}
+Causality analysis based on system monitoring data plays a critical role in security analysis.
+King et al.~\cite{backtracking} proposed a backward causality
+technique to perform intrusion analysis by 
+automatically reconstructing a series of events that are dependent on a user-specified event.
+It further improves the approach to track dependency cross different hosts~\cite{backtracking2}.
+Goel et al.~\cite{taser} proposed a technique that recovers from an intrusion
+based on forensic analysis.
+% and Sitaraman et al.~\cite{backtrackingfile} proposed a technique that leverages forensic analysis to detect file system intrusion.
+
+Further efforts have been made to mitigate the dependency explosion problem by performing fine-grained causality analysis. BEEP~\cite{beep} identified the event handling loops in programs and enable selective logging for unit boundaries and unit dependencies through instrumentation. Ma et al.~\cite{ma2016protracer}  alternates between logging and taint tracking to derive more accurate dependencies,
+and Kwon et al.~\cite{mcitracking} further leverages context-sensitive causal models to improve the analysis.
+PrioTracker~\cite{timelytrack} proposed to learn a reference model of normal activities to prioritize abnormal activities.
+
+Compared to these existing works, \tool addresses the dependency explosion problem via computing weights for each dependency based on our novel features and pruning edges with low weights, which do not require heuristics~\cite{backtracking,backtracking2}, binary instrumentation~\cite{ma2016protracer,mcitracking}, modification of kernels~\cite{trustkernel}, or reference models of normal activities~\cite{timelytrack}.
+Moreover, \tool provides reputation propagation that can automatically identify malicous payloads, which cannot be done by all these works. 
+
+To mitigate the burden of storing large amount of system monitoring data, 
+LogGC~\cite{loggc} leveraged garbage collection to remove temporary files,
+Xu et al.~\cite{reduction} proposed to merge dependencies while still preserving high-fidelity causal dependencies,
+and Tang et al.~\cite{reduction2} used templates to summarize the set of system libraries loaded at the process initiation period.
+\tool can be integrated with these works to achieve better scalability for handling cases that span a long period of time (\eg months).
+
+\myparatight{Weight Computation}
+Several components of \tool are built up on a set of existing techniques. Our local edge clustering step is based on KMeans++~\cite{Arthur:2007:KAC:1283383.1283494}, which optimizes the seed initialization and leads better clustering quality, compared with KMeans. Our local feature projection step is constructed based on linear discriminant analysis (LDA)~\cite{Mika99fisherdiscriminant}, which finds a linear combination of features that characterizes or separates multiple classes of objects. Yet, to apply it in our setting, we extend the standard LDA to handle the challenges including lack of a prior class information, matrix singularity, and limited number of labeled instances. 
+
+\myparatight{Reputation Propagation}
+Our reputation propagation model is inspired by the TrustRank algorithm~\cite{Gyongyi:2004:vldb}, which is originally designed to separate spam and reputable web pages: it first selects a small set of reputable seed pages, then propagates the trust scores following the link structures using the PageRank algorithm~\cite{Page:techreport:1998}, and identifies spam pages as those with low scores. Similar ideas have been applied in applications including Sybil detection on social networks~\cite{cao2012sybilrank,Gong:2014:tifs,gao2018sybilfuse}.
+The model implemented in this work differs in that it propagates the reputation score in an aggregation style rather than a distribution style, which avoids the serious degradation of reputation scores after propagating on long dependency paths.
+\eat{
+The model implemented in this work differs in that it propagates the reputation scores of both benign and malicious entities, leading to faster convergence of propagation. 
+}
+

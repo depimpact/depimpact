@@ -1,0 +1,30 @@
+\begin{table}[Htb]
+	\centering
+	\caption{Reputation Inference Result}
+	\label{tab:Reputation}
+	\resizebox{0.48\textwidth}{!}{%
+		\begin{tabular}{|l|l|l|l|}
+        \hline
+        \thead{Attack} &   \thead{Reputation} & \thead{Expected} & \thead{Correct} \\
+        \hline
+        3File\_bbb   &  0.19762253140680944 &      low &    true \\ \hline
+        3File\_gbb   &  0.39414895234888064 &      low &    true \\ \hline
+        3File\_ggb   &   0.5906197332148149 &     high &    true \\ \hline
+        3File\_ggg   &   0.8023774685931906 &     high &    true \\ \hline
+        2File\_bb    &  0.20802102018891963 &      low &    true \\ \hline
+        2File\_bn    &   0.3526154211010422 &      low &    true \\ \hline
+        2File\_gb    &   0.4972098220131649 &  neutral &    true \\ \hline
+        2File\_gg    &   0.7919789798110801 &     high &    true \\ \hline
+        2File\_gn    &   0.6445944009121225 &     high &    true \\ \hline
+        merge\_bb    &   0.1411487798953483 &      low &    true \\ \hline
+        merge\_gg    &   0.8588950781079796 &     high &    true \\ \hline
+        merge\_gb    &    0.448352866260653 &      low &    true \\ \hline        
+        wget\_tar1   &    0.485232600875208 &      low &    true \\ \hline
+        wget\_tar2   &   0.4813537155459747 &      low &    true \\ \hline
+        curl         &  0.28347963888390715 &      low &    true \\ \hline
+        scp          &  0.48022515549337186 &      low &    true \\ \hline
+        ssh          &  0.49494022155754236 &      low &   false \\ \hline
+        mal\_script  &   0.4944954242221246 &      low &   false \\ \hline
+        \end{tabular}
+	}
+\end{table}

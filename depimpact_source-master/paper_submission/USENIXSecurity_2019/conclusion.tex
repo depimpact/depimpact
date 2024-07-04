@@ -1,0 +1,11 @@
+\section{Conclusion}
+We propose a novel approach, \tool, which assigns discriminative weights to edges in a dependency graph 
+built from system auditing events
+and propagates reputation scores in the weighted graph from seed sources to POI events.
+The discriminative edge weights enable \tool to reveal critical edges for automatically reconstructing the attack sequence.
+The reputation propagation paradigm enables \tool to automatically determine the suspiciousness/trustworthiness of POI entities based on whether the system entities originate from suspicious sources or trusted sources.
+The synergy of attack sequence reconstruction and reputation propagation makes \tool the first step towards automatic attack investigation. 
+The evaluations on system tasks that inject benign and malicious payloads through key system interfaces and real APT attacks demonstrate that 
+(1) \tool effectively propagates reputation since POI entities receive expected reputation scores in both benign and malicious scenarios;
+(2) \tool effectively reveals critical edges since the computed weights for the critical edges are well separated from the computed weights for the non-critical edges.
+These results make \tool the first step towards automatic attack investigation.

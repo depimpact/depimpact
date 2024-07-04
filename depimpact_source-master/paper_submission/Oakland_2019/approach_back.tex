@@ -1,0 +1,258 @@
+\section{\tool Design}
+\label{sec:approach}
+In this section, we will present the three phases and the components of \tool in detail.
+
+\input{tables/events.tex}
+\subsection{Dependency Graph Generation}
+\label{subsec:logParsing}
+\tool leverages system auditing tool (\eg Sysdig~\cite{sysdig}) to collect information of system calls from the kernel, and then parses the collected events to build a global dependency graph.
+\tool focuses on three types of system events: (i) process creation and destruction, (ii) file access, and (iii) network access,
+and Table~\ref{tab:events} shows the representative system calls for these three types of events in Linux.
+From these system calls, \tool extracts the system entities, files, processes, and network sockets, and their security-related attributes.
+For each system call, \tool also extracts the event attributes as shown in Table~\ref{tab:event-attributes}.
+\tool filters out failed system calls, which could cause false dependencies among events.
+
+\input{BackTrackPseudo.tex}
+\noindent\textbf{Causality Analysis}.
+Given a POI event $e$, \tool applies causality analysis~\cite{backtracking} to produce a dependency graph $G_d$ of $e$, as shown in Algorithm~\ref{alg:backTrack}\footnote{Forward causality analysis can be implemented using a similar way, but not shown here.}.
+The algorithm adds $e$ to a queue (Line 2), and repeat the process of finding eligible incoming edges of the edges in the queue (Lines 3-12) until the queue is empty.
+
+\eat{
+We process log files in plain text. The expected output of this module is a dependency graph depicting all the activities in the log file. First, we need to uniquely identify the system entities and resources. We design our parser to differentiate three different kinds of system entities. The first one is ``process''. Process is uniquely identified by the process name and PID. The second kind of system entity is ``file''. We use the absolute path to a file as its unique identification. The third system entity is ``network socket''. It is identified by the IP addresses and port numbers of both sides of the communication. Table~\ref{tab:SystemEntity} shows the attributes used to identify system entities, resources and their visual representation in our graphs. Having identified the nodes, we can add edges according to their interactions in the recorded events. Typically, each system call has a process as subject and another object. A directed edge can be determined by the direction of data flow between the subject and object.  We need to record the key attributes of the edges as well, including the start time, end time, and amount of data transferred, if any. Table~\ref{tab:event-attributes} shows the attributes processed by \tool.}
+\eat{For most events, Sysdig generates two records for each of them. It introduces a lot of complexity for log processing. In order to match the exit record with the entering record for the same event, we use a hash table to keep track of the entering record. The key for these records are the start time-stamps, PIDs and process names. When the parser encounters the exit record of an event, if this operation failed because of the interruption or the other reason, the parser will skip this exit record. Otherwise, the parser will calculate the start time of this event based on current time-stamp and event duration. Use the start time and the other info, the parser will generate a complete record for the system event.}   
+
+
+
+
+\eat{
+After obtaining the dependency graph containing all the system events, we need to address the part users or security analysts are interested in. The goal of causality analysis is to reconstruct the time line of the events happened in this security event or the attack~\cite{backtracking}. This method works by observing OS-level objects (\eg files, network communication, or processes) and events (\eg system calls). The description and implementation is given for Unix-like operating systems. A causal relationship is specified by three parts: a source object, a sink object and a time interval. We classify dependency-causing events based on the source and sink objects and divide the system events into three categories, they include: process/process, process/file, and process/network. If a process creates another process, there is child dependency because of the existence of the causal relationship between the parent and child process. The second category of events are those that a process manipulates the data of files. The relevant system events include: ``read'', ``write'', ``readv'', ``writev'', and so on. The third category of events are those a process exchanges data with another machine through network. The relevant system events includes: ``write'', ``read'', ``sendto'', ``recvmsg'', ``recvfrom'', ``writev''. Table~\ref{tab:events} shows the system call belongs to each category. For the last two categories, the edge direction reflects the direction of data flow. By logging objects and dependency-causing event during run-time, we have enough information to build a causal graph.
+
+
+Rather than presenting the complete and complex causal graph, we assume that the administrator notices the compromised system and can identify at least one detection point, such as a modified, extra, or deleted file. Given this detection point, we have two rules to filter the objects and events in the original dependency graph: (i) we check whether this object could effect the state of the detection point. This means there should be a path connecting the detection point and given system objects. And, (ii) this system event needs to satisfy time condition. That is, it should not happen later than the time threshold of current object. In other words, if we care about the object's state at time $t$, the operations that happen later than $t$ will be removed because these operations do not affect the object's state at time $t$. \textcolor{red}{the rest of the paragraph (until Alg.) read a little confusing and unclear. It sounds like an implementation detail, so we can delete it.} \eat{For a newly added object, we need to update the time threshold associated with it. We will use the maximum end time that satisfy target's time threshold as the newly added object's time threshold. The detection point's threshold could be the end time of the latest operations that involve detection point or any given time.}Alg.\ref{alg:backTrack} shows how we reconstruct the time line of a system event and build a causal graph. After this step, we get a dependency graph only about the given system objects and filter out the other irrelevant parts from the original dependency graph. }
+
+\subsection{Graph Preprocessing}
+\label{subsec:edge-merge}
+
+
+Although the graph becomes smaller after the causality analysis, there still remains many edges between the same pair of nodes. We can clearly see this from the parts marked in the red square in Fig.~\ref{fig:before}. This is because the modern kernel will finish a simple task (\eg file read/write) in multiple time intervals. In the real causal graph, this will be reflected as hundreds or thousands of edges between the same pair of nodes. The goal of this part is to reduce the number of such edges. \eat{It is based on this observation: that an average computer produces more than 1 million events per day, while a server could yield 10 to 100 times the volume. To find a critical path in a causal graph containing more than million edges is a daunting task even for an experienced security expert.} For this, we propose an algorithm to reduce the number of edges while keeping part of causal relationship between the system objects. Based on a recent work in~\cite{reduction}, we ignore the time window in our work because the window provided by Sysdig is extremely small  (\textit{e.g.} nanoseconds). At the same time, for some events such as file write, the process alternately calls ``read" and ``write". In this scenario, many edges could not be merged based on the original method and this introduces excessive redundant causality. Based on these two observations, we merge the edges between any pair of nodes if these edges have the same event type. At the same time, we also keep the most important time information, the beginning and end time of events. Algorithms~\ref{alg:merge} shows our implementation.
+
+\input{NodeSplit.tex}
+% \textcolor{red}{It would be better to be consistent about the notations used for the nodes. We did not use $s$ before I think. }\pfang{changed} In some situations, there will be some edges could not be merged together because of  event type difference. Assume nodes $u$ and $v$ are a pair of vertices in the graph with multiple edges between them. We borrow the idea of static single assignment form (SSA)~\cite{nielson2004principles} that splits a node $u$ into multiple nodes, where each node has only one outgoing edge pointing to node $v$. The nodes generated by split step will inherit the same incoming edges of the original \textit{u}. After this step, we could use a transition matrix to present the weights of edges.
+% \pgao{the output is a directed simple graph\ref{xx}}\pfang{it is hard to find a reasonable category of this graph, it may has loop and parallel edges} \\
+
+
+\subsection{Feature Generation}
+\label{subsec:feature-generation}
+
+The core of effective attack investigation on weighted causality graph is to intelligently associate each edge on the graph with a \emph{weight score} between 0 and 1, so that edges that are critical to the attack sequence (\ie \emph{critical edges}) have higher weights (\ie scores closer to 1), while edges that are non-critical to the attack sequence (\ie \emph{non-critical edges}) have lower weights (\ie scores closer to 0).
+
+Formally, given a causality graph $G = (V, E)$, which comprises a set $V$ of nodes (\ie system entities) and a set $E$ of directed edges (\ie system events), we define the \emph{weight score} for an edge $(u, v) \in E$ as $W_{(u, v)} \in [0, 1]$.
+%
+The edge weight $W_{(u, v)}$ models the level of ``trust" that the parent node $u$ puts on the child node $v$. 
+%
+For an edge with a high weight, if the parent node is benign (\ie parent node has a high reputation score), we then expect the child node to be also benign (\ie child node also has a high reputation score based on our reputation propagation mechanism in Section~\ref{subsec:reputation-propagation}). 
+On the other hand, for an edge with a low weight, if the parent node is suspicious (\ie parent node has a low reputation score), we then expect the child node also to be suspicious (\ie child node also has a low reputation score). 
+What's more, such edge weight computation mechanism will enable not only the reputation propagation, but also the graph reduction, in which we filter edges whose weight scores are below certain thresholds (Section~\ref{xx}\pgao{ref}).
+
+Next, we present our edge weight computation mechanism.
+
+\subsubsection{Discriminative Feature Generation}
+\label{subsubsec:feature-generation}
+To compute the edge weights, we first define and generate three discriminative features from the causality graph. 
+
+\begin{itemize}[noitemsep, topsep=1pt, partopsep=1pt, listparindent=\parindent, leftmargin=*]
+
+\item \textbf{Relative Time difference:}
+For an edge $(u, v)\in E$, we measure the difference between its timestamp (note that this timestamp is aggregated by CPR in Section~\ref{subsec:edge-merge}) and the timestamp of the POI event\pgao{define POI somewhere}.
+The intuition is that the event that occurred closer to the POI event is more temporally related to the POI event, and hence should be associated with a higher feature value. 
+Thus, we define the \emph{time difference feature} $f_{T(u, v)}$ for the edge $(u, v)$ as:
+\begin{equation}
+\label{eq:time-feature}
+    f_{T(u, v)} = \ln(1 + 1/\mid t_{(u, v)} - t_{POI}\mid),
+\end{equation}
+where $t_{(u, v)}$ and $t_{POI}$ represent timestamp values 
+%(in seconds) 
+of the event edge $(u, v)$ and the POI event.
+
+In (\ref{eq:time-feature}), $f_{T(u, v)}$ is a positive real number. The smaller the time difference $\mid t_{(u, v)} - t_{POI}\mid$ gets, the larger the value of $f_{T(u, v)}$ becomes, and hence the more trust the parent node $u$ puts on the child node $v$ in the temporal dimension.
+Special action needs to be taken when the event edge $(u, v)$ is actually the POI event, and hence $\mid t_{(u, v)} - t_{POI}\mid = 0$. To handle such a case, we specify that the minimal time difference to be one tenth of the minimal unit (\ie nanosecond) for the timestamp field in the audit logging framework (\ie $1e-10$), and use this minimal value when computing the time difference feature of the POI event. By doing so, the POI event will have the highest time difference feature value $f_{T(u, v)} = log(1 + 1e10)$.
+
+
+\item \textbf{Relative Data Amount Difference:}
+For an edge $(u, v)\in E$, we measure the difference between the data amount associated with this event edge and the size of file in the POI event (\eg\pgao{ref example}).
+The intuition is that the closer the data amount of an event is to the size of POI file, the more likely this event edge is related to the POI event, and hence should be associated with a higher feature value. Thus, we define the \emph{data amount difference feature} $f_{D(u, v)}$ for the edge $(u, v)$ as:
+\begin{equation}
+\label{eq:data-feature}
+    f_{D(u, v)} = 1/(\mid s_{(u, v)} - s_{POI}\mid + \alpha),
+\end{equation}
+where $s_{(u, v)}$ and $s_{POT}$ represent the data amount of the event edge $(u, v)$ and the size of the POI file.
+
+\textcolor{red}{there it too much overlap between the below paragraph and the one for time difference. We can just say similar to time difference, ...}
+In (\ref{eq:data-feature}), $f_{D(u, v)}$ is a positive real number. The smaller the data amount difference $\mid s_{u, v} - s_{POI}\mid$ get, the larger the value of $f_{D(u, v)}$ becomes, and hence the more trust the parent node $u$ puts on the child node $v$ in the data dimension.
+Note that in (\ref{eq:data-feature}), we use a small positive number $\alpha$ to handle the special case when $(u, v)$ is the POI event. Thus, the POI event will have the highest data amount difference feature value $f_{D(u, v)} = 1/\alpha$. Empirically, we set $\alpha = 1e-4$.
+
+
+\item \textbf{Concentration Degree:}
+One important category of non-critical edges that often appear in a causal graph are events that access system packages\pgao{ref}. These edges are often associated with considerable data amount and occur at various timestamps, and hence using only $f_{T(u, v)}$ and $f_{D(u, v)}$ is less effective in distinguishing critical edges from non-critical ones.
+To address this challenge, we observe that most system package nodes do not have any incoming edges and these system package nodes are source nodes in the corresponding edges. Leveraging this observation, we define the \emph{structure feature} for the edge $(u, v)$ as:
+\begin{equation}
+    \label{eq:structure-feature}
+    f_{S(u, v)} = InD_u/OutD_u,
+\end{equation}
+where $InD_u$ and $OutD_u$ represent the in-degree and out-degree of the source node $u\in V$.
+
+\textcolor{red}{similar comment as above}
+In (\ref{eq:structure-feature}), $f_{S(u, v)}$ is a non-negative real number. The larger the $InD_u$ gets, the more trust the source node $u$ receives from is parent nodes, and hence the larger the value of $f_{S(u, v)}$ becomes. Similarly, the larger the $OutD_u$ gets, the more number of child nodes the source node $u$ needs to puts its trust on, and hence the smaller the value of $f_{S(u, v)}$ becomes. Particularly, if $u$ is a system package node, $In_u$ is likely to be zero, and hence $f_{S(u, v)} = 0$. 
+\pgao{special setup for seeds}
+
+\end{itemize}
+
+
+
+
+\subsubsection{Local Feature Normalization}
+\label{subsubsec:feature-normalization}
+
+Before using the three aforementioned features to compute edge weights, we need to scale them to the same range. 
+Globally scaling them using conventional methods such as range normalization\pgao{ref} and standardization\pgao{ref} does not intuitively make much sense in our specific setting, since a node is only affected by its parents but not by its children or siblings. 
+Therefore, we propose a novel mechanism called \emph{local feature normalization}. For an edge $(u, v) \in E$, we \emph{locally} normalize its feature $f$ by the sum of the feature of all incoming edges of node $v$. Thus, for node $v$, this mechanism enables all its incoming edges to be compared in the same scale. The higher the normalized feature gets, the more ``impact"\pgao{another word} its corresponding parent node has on the child node $v$.
+
+Formally, for an edge $(u, v)\in E$, its feature $f_{(u, v)}$ is locally normalized according to the following equation:
+\begin{equation}
+    \label{eq:local-feature-normalization}
+    f_{(u, v)} = f_{(u, v)}/\sum_{u' \in Par(v)} f_{(u', v)}
+\end{equation}
+where $Par(v)$ represents the set of parent nodes of node $v$.
+
+We use (\ref{eq:local-feature-normalization}) to normalize the three features $f_{T(u, v)}$, $f_{D(u, v)}$, and $f_{S(u, v)}$. After normalization, each feature is scaled to a value in $[0, 1]$.
+
+
+
+\subsection{Weight Computation through Discriminative Local Feature Projection}
+\label{subsubsec:weight-computation}
+
+After computing and normalizing the three numerical features for every edge, the next task is to combine them together into a single weight, $W_{(u, v)}$, which represents the level of ``trust" that the parent node $u$ puts on the child node $v$.
+The challenge is how to make the weight computation procedure ``discriminative", so that critical edges (\ie edges that reveal the attack provenance) will have higher weights, while non-critical edges (\pgao{def}) will have lower weights.
+
+% supervised classification does not work
+One approach to combine three features into a single value is to use supervised machine learning. We train a binary classifier to distinguish the critical edges from non-critical edges, and use the probabilistic class estimates (methods like logistic regression and random forest support this) as edge weights. 
+However, this approach has fundamental limitations which make it unsuitable for our specific problem setting. 
+In order to have high prediction accuracy, supervised machine learning approaches often require large amount of training data, the training samples in each class exhibit consistent patterns, and the testing data is supposed to be obtained from the same distribution as the training data.
+However, the problem of distinguishing critical edges from non-critical edges is highly specialized to the specific attack scenario and the features $f_{T(u, v)}$ and $f_{D(u, v)}$ are computed with respoect to the specific POI event. Thus, the binary classifier trained for one particular attack case can hardly be generalized to different attack cases. This highly specialized problem setting also causes significant difficulty in getting enough labeled training samples and the classes are highly imbalanced (since there are much fewer critical edges than non-critical edges).
+
+% dimensionality reduction + supervised by clustering
+Recognizing the limitations in supervised learning, in this work, we adopt the idea from unsupervised learning: dimensionality reduction through linear projection. 
+Linear projection aims to reduce the dimension of a data sample by projecting it to a lower dimensional space through matrix multiplication~\pgao{ref}, which has many useful properties such as high interpretability (\ie relative importance of different features) and low computational cost.
+In our problem setting (combining three features into a single weight), the projection matrix is actually a projection vector. 
+Formally speaking, for an edge $(u, v) \in E$ with locally normalized feature vector $\mathbf{f}_{(u, v)} = (f_{T(u,v)}, f_{D(u, v)}, f_{S(u, v)})$, its weight $W_{(u, v)}$ is computed by projecting the feature vector onto a unit vector $\mathbf{a}_{(u, v)} = (a_{T(u, v)}, a_{D(u, v)}, a_{S(u, v)})$:
+\begin{align}
+    W_{(u, v)}   = &\; \mathbf{f}_{(u, v)} \boldsymbol{\cdot} \mathbf{a}_{(u, v)} \nonumber \\
+                 = &\; a_{T(u, v)} * f_{T(u, v)} + a_{D(u, v)} * f_{D(u, v)} \nonumber \\
+                & + a_{S(u, v)} * f_{S(u, v)}\label{eq:projection}
+\end{align}
+where $\norm{\mathbf{a}_{(u, v)}} = 1$.
+
+In order to leverage linear projection to compute discriminative weights, the key challenge is to find a good projection vector so that the projected weights of critical edges can be clearly separated from the projected weights of non-critical edges. 
+Thus, approaches based on manually setting a projection universally for all edges or the popular dimensionality reduction method PCA (PCA maximizes the variance of projected data rather than the class separation) do not satisfy the need.
+
+To address this challenge, we propose a novel \emph{discriminative local feature projection} mechanism. Our mechanism leverages the idea from discriminant analysis\pgao{ref}. Discriminant analysis comprises of a class of techniques that find low-dimensional projection of data associated with class labels which maximizes the class separation. In particular, we leverage linear discriminant analysis (LDA) that finds low-dimensional linear projection. Directly applying LDA is not suitable in our problem setting, mainly due to the following reasons:
+(i) LDA requires labeled samples from different classes so that it knows how to maximize the class separation. However, we do not have such edge labels and approaches like supervised learning to obtain such labels face the same generalization problems as we discussed previously.
+(ii) \textcolor{red}{define the sink node first?} The problem of distinguishing critical edges from non-critical edges is highly localized to each sink node (since a node is only affected by its parents but not by its children or siblings) and our features are also locally normalized by incoming edges of sink node. Thus, globally computing the projection vector and projecting the edge features (the edge features are not normalized in the same scale) will cause significant bias.
+(iii) The performance of standard LDA can be seriously degraded if there are only a number of training samples compared to the dimension of the feature space. However, the number of critical edges is often much smaller than the number of non-critical edges (\ie highly imbalanced). This might lead to the violation of LDA assumptions (\eg the within-class scattering matrix $S_w$ should be nonsingular). And, 
+(iv) Standard LDA only maximizes the separation of low-dimensional projections of classes, and does not guarantee which class has higher projected values. However, our problem setting requires that critical edges have higher weights than non-critical edges. This requires further post-processing of LDA projected values.
+
+Next, we describe how we address these challenges in our discriminative local feature projection mechanism.
+
+
+\subsubsection{Local Edge Clustering}
+To address the first challenge of lacking class labels, we realize that we can \emph{locally cluster} the incoming edges of each (sink) node $v$ into two clusters based on their feature vectors, so that critical edges and non-critical edges can be naturally separated into two groups, satisfying the prerequisite for LDA. Another notable highlight of this approach is that after local feature normalization in Section~\ref{subsubsec:feature-normalization}, all incoming edges of the sink node $v$ have features on the same scale, which are naturally fit for the clustering.
+
+Specifically, given that we want to separate the incoming edges of $v$ into two groups, we leverage the Multi-KMeans++ clustering algorithm\pgao{ref}. KMeans++ is based on the well-known KMeans algorithm\pgao{ref}, but it uses a different method for choosing the initial seeds and thus it avoids cases where KMeans sometimes results in poor clustering. KMeans++/KMeans clustering aims to partition the observations (points) into $k$ clusters such that each observation belongs to the cluster with the nearest center. Multi-KMeans++ is a meta algorithm that performs $n$ runs of KMeans++ and then chooses the best clustering that has the lowest distance variance over all clusters.
+\textcolor{red}{may mention the numbers in the evaluation section. Also, if there is a motivation to select such paramteters, it would be good to briefly discuss it.} In our problem setting, we set $k = 2$ and $n = 20$.
+
+
+\subsubsection{Local Feature Projection}
+Instead of globally computing the LDA projection vector, after locally clustering the incoming edges of a sink node $v$, we locally compute the projection vector for all incoming edges so that the projected values of critical edges are maximally separated from the projected values of non-critical edges. We extend the standard two-classes LDA to handle the cases when its assumptions are not satisfied.
+
+Formally, for the sink node $v$, assume we have a set of 3-dimensional samples $\{x^{(1)}, x^{(2)}, \dots, x^{(N)}\}$ representing the incoming edges of $v$, $N_1$ of which belong to cluster $w_1$, and $N_2$ to cluster $w_2$ (\ie $N1 + N2 = N$).
+The mean vector of each group is $\mu_1 = \frac{1}{N_1}\sum_{x\in w_1} x$, $\mu_2 = \frac{1}{N_2}\sum_{x\in w_2} x$. 
+The between-cluster scatter matrix is defined as $S_b = (\mu_1 - \mu_2)(\mu_1 - \mu_2)^T$.
+The within-cluster scatter matrix is defined as $S_w = \sum_{x\in w_i}(x-\mu_i)(x-\mu_i)^T$.
+LDA (2-clusters) then tries to find the vector $w$ to maximize the following Fisher criterion:
+\begin{equation}
+    \label{eq:lda-objective}
+    J(w) = \frac{w^TS_bw}{w^TS_ww}
+\end{equation}
+
+In other words, we are looking for a projection where samples from the same cluster are projected very close to each other (denominator $w^TS_ww$) and, at the same time, the projected means of different clusters are farther apart as possible (numerator $w^TS_bw$).
+
+Taking the derivate of $J(w)$ and equate it to zero, we get $S_bw =\lambda S_ww$. If $S_w$ is non-singular, we can convert this to a standard eigenvalue problem $S_w^{-1}S_bw = \lambda w$. Solving it yields
+\begin{equation}
+    \label{eq:lda-solution}
+    w^* = \argmax J(w) = S_w^{-1}(\mu_1-\mu_2)
+\end{equation}
+
+Eq.~\ref{eq:lda-solution} is not applicable when the inverse of $S_w$ does not exist (\ie $S_w$ is singular). 
+However, in our context, such condition may happen pretty often, given that the number of incoming edges for most nodes is not large and the number of critical edges is even smaller.
+%For example, if the sink node $v$ only has two incoming edges, and one of them is a critical edge, the within-cluster scatter matrix will be a zero matrix. 
+%For example, it is often the case that the sink node (process entity) has one critical edge but many other non-critical edges that read system packages, and the concentration degree feature $f_{C(u, v)}$ of the non-critical edges equals zero (since system packages often have no incoming edges). In such cases, the third row and the third column of $S_w$ are all zero.
+Recognizing such limitation, we extend the standard LDA by adding support for cases in which $S_w$ is singular.
+Basically, when $S_w$ is singular, we select the projection vector from the following candidates:
+
+\begin{itemize}[noitemsep, topsep=1pt, partopsep=1pt, listparindent=\parindent, leftmargin=*]
+
+    \item $S_w^{+}(\mu_1-\mu_2)$: $S_w^{+}$ is the Moore–Penrose\pgao{ref} inverse of $S_w$. When $S_w$ is non-singular, $S_w^{+} = S_w^{-1}$.
+
+    \item $\mu_1-\mu_2$
+\end{itemize}
+For each candidate, we compute the numerator of Fisher criterion $w^TS_bw$ (we normalize $w$ first), and selects the one that has larger value.
+
+
+\myparatight{Special Cases}
+For cases the node has only one incoming edges, we skip the clustering and projection step and directly set its edge to 1.
+
+
+
+\subsubsection{Post-processing}
+
+\myparatight{Adjusting Projection Vector Direction}
+LDA computes the projection vector that maximizes the cluster separation after projection, but it does not guarantee which cluster has higher projected values. In fact, the direction of the projection vector matters a lot and negating the direction will change the relative magnitude of the projected values of the two clusters.
+
+Our goal is to make the cluster that contains critical edges has higher projected values compared to the cluster that contains non-critical edges. Fundamentally, this problem is difficult to solve, since we don't have labels for critical edges and thus do not actually know which cluster contains the critical edges.
+%
+We propose to address this problem by leveraging several heuristics:
+\begin{itemize}[noitemsep, topsep=1pt, partopsep=1pt, listparindent=\parindent, leftmargin=*]
+
+\item If all three dimensions of the projection vector are non-positive, negate.
+\item If all three dimensions of the projection vector are non-negative, do not negate.
+\item If the projection vector has both negative dimensions and positive dimensions, negate by condition:
+
+\begin{itemize}[noitemsep, topsep=1pt, partopsep=1pt, listparindent=\parindent, leftmargin=*]
+    \item If one cluster has seed edges and one cluster doesn't, negate the projection vector when necessary to make sure the cluster that has seed edges has higher projected mean. This is based on the insight that seed edges should have high weights.
+    \item If both clusters have seeds edges or neither has seed edges, negate the projection vector when necessary to make sure the cluster that has a smaller size (\ie contains fewer edges) has higher projected mean. This is based on the insight that among all incoming edges of a node, the number of critical edges is often much smaller than the number of non-critical edges.
+\end{itemize}
+\end{itemize}
+
+From our experiments in Sec.~\ref{xx}, our projection vector direction adjusting scheme works very well for a wide range of representative cases for key system interfaces and for attack behaviors.
+After adjusting the projection vector direction, we normalize it, and compute the weight for each edge using Eq.~\ref{eq:projection}. 
+
+\myparatight{Scaling the Projected Weights to 0-1 Range}
+After projection, critical edges have higher projected values than non-critical edges, and the projected values of two groups are largely separated.
+However, one more post-processing step needs to be done: some edges might have negative projected values, which will cause problem for later local weight normalization (Sec.~\ref{subsubsec:edge-normalization}). 
+Therefore, we scale the projected values to the range $[0, 1]$. We further add a small offset (we use one hundredth of the difference of the smallest value and the second smallest value) to each scaled value so that we only have positive scaled weights.
+
+
+\subsubsection{Local Edge Weight Normalization}
+\label{subsubsec:edge-normalization}
+
+Similar to local feature normalization in Section~\ref{subsubsec:feature-normalization}, for an edge $(u, v)\in E$, we \emph{locally} normalize its edge weight by the sum of edge weights of all incoming edges of node $v$: 
+
+\begin{equation}
+    \label{eq:local-feature-normalization}
+    W_{(u, v)} = W_{(u, v)}/\sum_{u' \in Par(v)} W_{(u', v)},
+\end{equation}
+where $Par(v)$ represents the set of parent nodes of node $v$.
+
+After normalization, the weights of all event edges are in range $[0, 1]$\pgao{more specific} and the sum of weights of all incoming edges of any node is equal to 1 (except for nodes that have no parents). This completes the creation of weighted causality graph, which is amenable to our reputation propagation mechanism.
+
+\input{ReputationPropagation.tex}

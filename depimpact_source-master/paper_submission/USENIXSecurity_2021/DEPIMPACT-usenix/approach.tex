@@ -1,0 +1,313 @@
+\section{Design of \tool}
+\label{sec:approach}
+
+% In this section, we present \tool in detail.
+
+
+
+
+\subsection{Dependency Graph Generation}
+\label{subsec:phase1}
+
+\subsubsection{System Auditing}
+\label{subsubsec:system-auditing}
+
+\tool leverages mature system auditing frameworks~\cite{auditd,etw,dtrace,sysdig} to collect system audit logs about system calls from the kernel. 
+\tool then parses the collected logs to build a \emph{global} system dependency graph, where nodes represent system entities and edges represent system (call) events. 
+In particular, \tool focuses on three types of system entities/events: 
+(i) file access, 
+(ii) process creation and destruction, and
+(iii) network access.
+%
+\cref{tab:events} shows the representative system calls (in Linux) processed by \tool.
+Failed system calls are filtered out by \tool, as processing them will cause false dependencies among events.
+\cref{tab:entity-attributes,tab:event-attributes} show the representative attributes of entities and events extracted by \tool.
+%
+Following the existing work~\cite{liu2018priotracker,gao2018aiql,gao2018saql}, to uniquely identify entities,
+for a process entity, we use the process name and PID as its unique identifier.
+For a file entity, we use the absolute path as its unique identifier. 
+For a network 
+%socket 
+connection entity, we use 5-tuple (\emph{$\langle$srcip, srcport, dstip, dstport, protocol$\rangle$)} as a network 
+connection's unique identifier. 
+% as processes usually communicate with some servers using different network connections but with the same IPs and ports, treating these connections differently greatly increases the amount of data we trace and such granularity is not required in most of the cases~\cite{liu2018priotracker,gao2018aiql,gao2018saql}. Thus, 
+Failing to distinguish different entities causes problems in relating events to entities and tracking the dependencies among events.
+
+
+
+
+\subsubsection{Backward Causality Analysis}
+\label{subsubsec:backward-causality}
+
+Given a POI event, \tool performs backward causality analysis (\cref{subsec:causality-analysis}) to generate a \emph{local} backward dependency graph $G_d$ for the POI event.
+%
+Briefly speaking, backward causality analysis adds the POI event to a queue, and repeats the process of finding eligible incoming edges of the edges/events (\ie incoming edges of the source nodes of edges) in the queue until the queue is empty. 
+The output of Phase I is a backward dependency graph that only contains system events (and associated entities) and that are causally dependent on the POI event.
+
+%\input{algs/backtrack}
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Dependency Weight Computation}
+\label{subsec:phase2}
+
+\subsubsection{Edge Merge}
+\label{subsubsec:edge-merge}
+
+The dependency graph produced by causality analysis often has many parallel edges between two nodes~\cite{reduction}.
+The reason is that OS typically finishes a read/write task (\eg file read/write) by distributing the data proportionally to multiple system calls.
+% and each system call processes only a portion of data.
+% Although these edges preserves causal dependency~\cite{backtracking,reduction},
+% they create complication in propagating reputations: 
+% the reputation of the same node will be propagated multiple times.
+% that proposed Causality Preserved Reduction (CPR)
+Inspired by the recent work for dependency graph reduction~\cite{reduction}, \tool merges the edges between two nodes if the time differences of these edges are smaller than a given threshold. 
+% As shown in~\cite{reduction}, CPR does not work well for processes that have many interleaved read and write system calls, which introduces excessive causality.
+% As such, \tool adopts a more aggressive approach: for edges with the same direction (\ie representing read or write) between two nodes, 
+%(\eg file reads from \incode{read} or network reads from \incode{recvfrom}), 
+% \tool will merge them into one edge if the time differences of these edges are smaller than a given threshold. 
+We tried different values for the merge threshold and selected 10s, as it gives reasonable results in merging system calls for file manipulations, file transfers, and network communications, which is consistent with~\cite{reduction}.
+% Since such merge is performed after the dependency graph generation, all the dependencies among the merged edges are still preserved.
+% with the time windows of certain edges merged.
+%We tried different values, and 10s gives reasonable results in merging system calls for file content manipulation, which is consistent with [56]
+%Empirically, we set the threshold as 10 seconds, which is large enough for most processes to finish file transfers and network communications in modern computers. 
+
+
+
+\eat{
+\myparatight{Node Split}
+After the edge merge, the dependency graph may still have parallel edges (\ie edges indicating read or write from different system calls).
+For example, a process may receive data from a network socket via both \incode{read} and \incode{recvfrom}.
+% Although we merge edges within 10 seconds, it is possible that there are still parallel edges because of some long-running file transfers.
+These parallel edges create complications for weight computation: for a node, some of its incoming edges' time windows may violate the causal dependencies on the outgoing edges.
+
+To address the problem, 
+\tool first enumerates all node pairs that have parallel edges.
+For a node pair $(u,v)$ with parallel edges from $u$ to $v$,
+\tool splits $u$ into multiple copies and assigns each copy to one parallel edge, so that each copy only has one outgoing edge to $v$. The copies of $u$ also inherit all $u$'s incoming edges that have causal dependencies on $u$'s outgoing edges.
+The output is a simple directed dependency graph without parallel edges.
+}
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsubsection{Feature Extraction}
+\label{subsubsec:feature-extraction}
+For each edge, \tool extracts three features to compute a dependency weight, which models the correlation between the edge and the POI event.
+%The dependency weights are essential to revealing critical edges:
+An edge with a higher dependency weight implies more relevance to the POI event, and is more likely to be a critical edge.
+%
+
+\myparatight{Data Flow Relevance $f_{S(e)}$}
+Intuitively, edges that have similar data flow amount as the data size of the entities in the POI event are more likely to be relevant.
+As such, we design feature $f_{D(e)}$ to model the data flow relevance of an edge $e(u, v)$ to the POI event:
+
+\begin{equation}
+\label{eq:data-feature}
+    f_{S(e)} = 1/(\mid s_{e} - s_{e_s}\mid + \alpha)
+\end{equation}
+where $s_{e}$ and $s_{e_s}$ represent the data 
+%size 
+flow amount associated with the edge $e$ and the POI event $e_s$.
+The smaller the difference $\mid s_{e} - s_{e_s}\mid$, the higher the data flow relevance $f_{S(e)}$.
+%
+Note that we use a small positive number $\alpha$ (we set $\alpha = 1\mathrm{e}{-4}$) to handle the special case when $e$ is the POI event: POI event has the highest feature value $f_{S(e_s)} = 1/\alpha$.
+%In our design, we set $\alpha = 1\mathrm{e}{-4}$.
+
+
+\myparatight{Temporal Relevance $ f_{T(e)}$}
+Intuitively, edges that occurred at relatively the same time are more likely to be relevant.
+As such, we design feature $f_{T(e)}$ to model the temporal relevance of an edge $e(u,v)$ to the POI event:
+
+\begin{equation}
+\label{eq:time-feature}
+    f_{T(e)} = \ln(1 + 1/\mid t_{e} - t_{e_s}\mid)
+\end{equation}
+where $t_{(e)}$ and $t_{e_s}$ represent the timestamp values (we use the event end time) of the edge $e$ and the POI event $e_s$. 
+The smaller the difference $\mid t_{e} - t_{e_s}\mid$, the higher the temporal relevance $f_{T(e)}$.
+%
+To handle the special case when $e$ is the POI event (\ie $\mid t_{e} - t_{e_s}\mid = 0$), we use one tenth of the minimal time unit (nanosecond) in the audit logging framework (\ie $1\mathrm{e}{\mbox{-}10}$) to compute its feature value: $f_{T(e_s)} = ln(1 + 1\mathrm{e}{10})$. 
+This ensures that the POI event has the highest feature value.
+
+
+\myparatight{Concentration Ratio $f_{C(e)}$} 
+In the backward causality analysis, if the number of source nodes that can be traced from a node $v$ is 1 (\ie only one incoming edge from $v$), we say that the dependency represented by this edge is highly concentrated for $v$.
+Also, we would like to give higher weights to the node that can be reached from multiple paths in the backward direction.
+Thus, we define the \emph{concentration ratio} for the edge $e(u, v)$ as:
+
+\begin{equation}
+    \label{eq:structure-feature}
+    f_{C(e)} = OutDegree(v)/InDegree(v)
+\end{equation}
+    
+Here, $InDegree(v)$ and $OutDegree(v)$ represent the in-degree and out-degree of the sink node $v$.
+
+\eat{
+One important category of non-critical edges that often appear in a causal graph are events that access system libraries~\cite{reduction,reduction2}. These edges are often associated with considerable data amount and occur at various timestamps, and hence using only $f_{S(e)}$  and $f_{T(e)}$ is less effective in revealing critical edges from them.
+To address this challenge, we observe that most system library nodes are source nodes in the corresponding edges and do not have any incoming edges.
+Another category of non-critical edges are events that involve long-running processes as source nodes, which often have few incoming edges but many outgoing edges.}
+
+
+% discussion
+
+
+
+
+
+
+%
+%However, it is important to note that the proposed features are by no means absolute or comprehensive.
+%The design of \tool allows the security analyst to adjust proposed features and incorporate new features according to specific forensic investigation needs.
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsubsection{Dependency Weight Computation}
+\label{subsubsec:weight-computation}
+
+% http://www.sci.utah.edu/~shireen/pdfs/tutorials/Elhabian_LDA09.pdf
+
+To compute a dependency weight from the features, \tool leverages linear projection that is known for high interpretability and low computational cost~\cite{friedman2001elements}.
+Instead of directly taking the average,
+%(equivalent to projecting onto unit vector $[1\; 1\; \frac{1}{\sqrt{3}}]^T$), 
+\tool employs a \emph{discriminative feature projection scheme} based on Linear Discriminant Analysis (LDA)~\cite{Mika99fisherdiscriminant} to compute a projection vector to maximize the differences between critical edges and non-critical edges, with critical edges assigned with higher weights.
+% In this way, the projected weights of critical edges and non-critical edges are maximally separated, and critical edges 
+% %generally 
+% have higher weights than non-critical edges.
+%
+Next, we present the scheme in detail.
+
+
+
+\myparatight{Step 1: Edge Clustering}
+In the first step, \tool leverages clustering to separate edges into two groups: one is likely to contain critical edges, and the other for non-critical edges.
+%
+%Note that as shown in \pgao{\cref{x}}, due to imperfections of features, the clustering results may be noisy and hence cannot be straightforwardly used to identify critical component graph. 
+%
+Specifically, \tool first normalizes features to 0-1 range~\cite{friedman2001elements}, and then employs Multi-KMeans++ clustering algorithm~\cite{Arthur:2007:KAC:1283383.1283494}.
+%, which improves over standard KMeans algorithm on initial seeds selection and clustering robustness.
+KMeans clustering algorithm aims to partition the points into $k$ clusters such that each point belongs to the cluster with the nearest center.
+Based upon KMeans, KMeans++ improves the initial seeds selection to avoid poor clustering.
+Multi-KMeans++ is a meta algorithm that performs $n$ runs of KMeans++ and then chooses the best clustering that has the lowest distance variance over all clusters.
+We choose $k=2$ since we want to cluster edges into two groups, as required by LDA.
+We experimented a range of values for $n$ ($[5, 30]$) and chose $n=20$ as it delivers the best clustering results without much overhead.
+%based on our empirical analysis.
+
+
+
+
+\myparatight{Step 2: Discriminative Feature Projection}
+Given two groups of edges, \tool leverages Linear Discriminant Analysis (LDA)~\cite{Mika99fisherdiscriminant} to compute an optimal projection vector that maximizes the separation between group projections.
+%
+%Briefly speaking, LDA seeks to reduce the dimensionality of data while preserving as much of the group discriminatory information as possible.
+LDA finds the optimal projection plane such that the projected points in the same group are close to each other, and the projected points in different groups are far from each other.
+%
+Formally, LDA finds the projection vector $\omega$ that maximizes the Fisher criterion, $J(\omega) = \frac{\omega^TS_b\omega}{\omega^TS_w\omega}$, where $S_b$ and $S_w$ are between-group scatter matrix and within-group scatter matrix, respectively. 
+%
+Solving the optimization problem yields:
+
+\begin{equation}
+    \label{eq:lda-solution}
+    \omega^* = \argmax J(\omega) = S_w^{-1}(\mu_1-\mu_2)
+\end{equation}
+
+Denote the solution to \cref{eq:lda-solution} as $\omega^{*} = [\omega^{*}_{S}\; \omega^{*}_{T}\; \omega^{*}_{C}]^T$.
+For an edge $e$, its unnormalized weight $W_{e_{UN}}$ is computed as:
+
+\begin{equation}
+    \label{eq:projection}
+    W_{e_{UN}} = \omega^{*}_{S} f_{S(e)} + \omega^{*}_{T} f_{T(e)} + \omega^{*}_{C} f_{C(e)}
+\end{equation}
+
+One remaining issue is that \cref{eq:lda-solution} does not guarantee the direction of the projection vector, and it might be possible that 
+%negative projected weights and 
+critical edges have lower weights than non-critical edges.
+To address the issue, we leverage the observation that, in most cases, the number of critical edges is significantly less than the number of non-critical edges (as can be seen from attack cases in~\cref{subsec:evalsetup}).
+Specifically, we negate the direction of the projection vector if the average of the projected weights for a smaller edge group (likely to be the group of critical edges) is smaller.
+%
+As shown in \cref{subsec:rq3}, compared to the naive approach of taking the average of features (the average-projection approach), our feature projection scheme preserves as much of the group discriminatory information as possible and leads to better performance for entry node ranking.
+%(\ie entry nodes that are more relevant to POI are ranked upfront)
+
+
+
+
+\eat{
+Formally speaking, for each node $v$, the feature vectors $\{x\}$ of its $N$ incoming edges are clustered into two groups, $g_1$ (containing $N_1$ edges) and $g_2$ (containing $N_2$ edges), with group mean vectors: $\mu_1 = \frac{1}{N_1}\sum_{x \in g_1} x$, $\mu_2 = \frac{1}{N_2}\sum_{x\in g_2} x$, $N_1 + N_2 = N$.
+The between-group scatter matrix is defined as: $S_b = (\mu_1 - \mu_2)(\mu_1 - \mu_2)^T$.
+The within-group scatter matrix is defined as: $S_w = \sum_{x\in g_i}(x-\mu_i)(x-\mu_i)^T$.
+}
+
+\eat{
+Note that sometimes, the projected weights may contain non-positive values. To be amenable to the next step, in such condition, we shift all the projected weights to make them positive.
+}
+
+
+\eat{
+The applicability of \cref{eq:lda-solution} requires that $S_w$ is nonsingular (\ie $S_w^{-1}$ exists).
+However, this criterion may be violated quite often in our problem context, due to the large imbalance between the number of critical edges and the number of non-critical edges.
+Furthermore, standard LDA only ensures that the projected values of different groups are maximally separated, rather than guaranteeing which group has higher projected values, while our goal is to make critical edges have higher weights than non-critical edges.
+
+Recognizing such limitations, we \emph{extend the standard LDA} from the following two aspects.
+
+\emph{(a) Handling singular $S_w$:}
+When $S_w$ is singular, we select the projection vector
+%(we normalize it first) 
+from the following two candidates that results in a larger Fisher criterion numerator (\ie $\omega^TS_b\omega$):
+
+\begin{itemize}[noitemsep, topsep=1pt, partopsep=1pt, listparindent=\parindent, leftmargin=*]
+
+    \item $S_w^{+}(\mu_1-\mu_2)$, where $S_w^{+}$ is the Moore-Penrose~\cite{albert1972regression} inverse of $S_w$. 
+    %When $S_w$ is non-singular, $S_w^{+} = S_w^{-1}$.
+    
+    \item $\mu_1-\mu_2$ (\ie the direction of group mean difference)
+    %difference between group means)
+\end{itemize}
+
+\emph{(b) Correcting the projection vector direction:}
+We correct the direction of the projection vector (\ie negate), if critical edges have lower projected values than non-critical edges.
+Note that this problem is fundamentally challenging, since we do not have labels for critical edges and thus we do not know which group contains critical edges. 
+We approach this problem using a set of heuristics:
+
+\begin{enumerate}[label=\Roman*, noitemsep, topsep=1pt, partopsep=1pt, listparindent=\parindent, leftmargin=*]
+
+\item If all three dimensions of the projection vector are non-positive, negate.
+\item Else if all three dimensions of the projection vector are non-negative, do not negate.
+\item Else, 
+%If the projection vector has both negative dimensions and positive dimensions, 
+if the group with a smaller size has a smaller projected mean, negate.
+This is based on the insight that the number of critical edges is smaller than the number of non-critical edges in most cases.
+
+\end{enumerate}
+}
+
+
+
+
+\myparatight{Step 3: Edge Weight Normalization}
+For an edge $e(u, v)$, we normalize its projected weight by the sum of weights of all outgoing edges of the source node $u$:
+
+\begin{equation}
+    \label{eq:local-weight-normalization}
+    W_e = W_{e_{UN}}/\sum_{e' \in outgoingEdge(u)} W_{e'_{UN}}
+\end{equation}
+
+The rationale behind is to ensure that for each node, the weights of all its outgoing edges are in the range $[0.0, 1.0]$ and the sum of the weights is equal to $1.0$.
+%
+Coupled with our score propagation scheme for dependency impact (\cref{subsec:phase3}), such way of normalization ensures that (1) the dependency impact of any node does not exceed the maximum dependency impact of its child nodes, and (2) the dependency impact of any node does not exceed the dependency impact of the nodes in the POI event (\ie $1.0$).
+%, and guarantee the convergence of reputation propagation.
+%
+The output of Phase II is a weighted backward dependency graph for the POI event, in which the dependency weights encode the differences between critical edges and non-critical edges.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\input{relevance-propagation}

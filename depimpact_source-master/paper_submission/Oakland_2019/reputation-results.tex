@@ -1,0 +1,53 @@
+\subsubsection{Reputation Propagation Results}
+\label{subsec:reputation-results}
+
+We evaluate the effectiveness of \tool in identifying malicious and benign payloads through reputation propagation.
+
+\myparatight{Evaluation Setup}
+For each case, we set the initial reputation of seed nodes to both high seed reputation setting (\emph{HighRP}; seeds RP = 1.0) and low seed reputation setting (\emph{LowRP}; seeds RP = 0.0).
+For each setting and for all cases, we propagate the reputation from seed nodes according to \cref{alg:reputaionPropagation}. We record the final reputation of POI nodes.
+%
+We compare the POI reputation computed in the following four weight computation approaches:
+
+\begin{itemize}[noitemsep, topsep=1pt, partopsep=1pt, listparindent=\parindent, leftmargin=*]
+    
+    \item \emph{ManualProjection}: We select a fixed parameter vector $(0.1, 0.5, 0.4)$ and normalize it to be a projection vector.
+    
+    \item \emph{GlobalProjection}: We globally cluster all edges in the graph using Multi-KMeans++ and compute the projection vector using extended LDA. 
+    
+    \item \emph{GlobalProjectionNoOutlier}: Same as previous one, but for nodes that have only one incoming edge (\ie outlier edges), we do not consider these edges in the global clustering and projection vector computation, and directly assign their final weights to 1.
+
+    \item \emph{LocalProjection}: This is the one employed in \tool (\cref{subsubsec:weight-computation}). We locally cluster the incoming edges of every node using Multi-KMeans++ and compute the projection vector using extended LDA.
+    
+\end{itemize}
+
+\myparatight{Evaluation Metric}
+A better approach will lead to a higher POI reputation in the \emph{HighRP} setting and a lower POI reputation in the \emph{LowRP} setting.
+We compute the \emph{average percentage improvement} of reputation scores of \emph{GlobalProjection}, \emph{GlobalProjectionNoOutlier}, and \emph{LocalProjection} over \emph{ManualProjection}.
+Specifically, in the \emph{HighRP} setting, the percentage improvement is calculated as $\frac{RP - RP_{ManualProjection}}{RP_{ManualProjection}}$. In the \emph{LowRP} setting, the percentage improvement is calculated as $\frac{RP_{ManualProjection}-RP}{RP_{ManualProjection}}$.
+
+
+\myparatight{Evaluation Results}
+\cref{tab:benignHighRP,tab:attackHighRP} show the reputation results of POI nodes for the 21 cases in the \emph{HighRP} setting.
+\cref{tab:benignLowRP,tab:attackLowRP} show the corresponding results
+%reputation results of POI nodes for the 21 cases 
+in the \emph{LowRP} setting.
+For presentation simplicity, we denote the four table categories as \emph{RepCase-HighRP}, \emph{AttCase-HighRP}, \emph{RepCase-LowRP}, and \emph{AttCase-LowRP}.
+
+We have the following observations:
+(1) \emph{GlobalProjection} performs worse than \emph{ManualProjection} in many cases. The average percentage improvement over \emph{ManualProjection} is negative for \emph{RepCase-HighRP}, \emph{RepCase-LowRP}, and \emph{AttCase-LowRP}, and slightly positive for \emph{AttCase-HighRP};
+This shows that dependency graph is quite diverse and it is difficult to separate all edges into two discriminative groups.
+(2) The performance of \emph{GlobalProjectionNoOutlier} significantly improves over \emph{GlobalProjection}.
+Compared to \emph{ManualProjection}, \emph{GlobalProjectionNoOutlier} achieves up to 16\% average improvement in \emph{HighRP} settings and up to 78\% average improvement in \emph{LowRP} settings. This shows the effectiveness and necessity of treating outlier edges differently when doing weight computation;
+(3) \emph{LocalProjection} achieves the best performance in most of the cases in \emph{HighRP} and \emph{LowRP} settings. Specifically, compared to \emph{ManualProjection}, \emph{LocalProjection} achieves up to 22\% average improvement in \emph{HighRP} settings and up to 92\% average improvement in \emph{LowRP} settings. 
+The results clearly show the necessity and superiority of clustering and projecting edges locally for each sink node.
+Note that this approach also treats outliers locally by directly setting their weights to 1, and thus \emph{LocalProjection} embraces the merits of \emph{GlobalProjectionNoOutlier} and achieves better performance.
+By employing this scheme to compute weights, \tool effectively identifies benign (\emph{HighRP}) and malicious payloads (\emph{LowRP}) by propagating initial reputation from seeds.
+
+
+
+
+\input{tables/benignCasesHighRP.tex}
+\input{tables/attacksHighRP.tex}
+\input{tables/benignCasesLowRP.tex}
+\input{tables/attacksLowRP.tex}

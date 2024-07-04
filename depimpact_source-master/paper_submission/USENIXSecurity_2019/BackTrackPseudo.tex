@@ -1,0 +1,19 @@
+\begin{algorithm}[!ht]
+
+    \KwIn{POI Event: $e_s$, Global Dependency Graph: $G$}
+    \KwOut{Dependency Graph for the POI Event: $G_d$}
+    $G_d \leftarrow new$ $Graph()$ \\
+    $Queue.add(e_s)$ \\
+    \While{Queue is not Empty}{
+        $u \leftarrow Queue.pop().source$ \\
+        $set \leftarrow G.incomingEdgeOf(u)$ \\
+        \For{$e \in set$}{
+            \If{$ts(e) < te(e_s)$}{
+                $G_d.add(e)$ \\
+                $Queue.add(e)$
+            }
+        }
+    }
+        \caption{Backward Causality Analysis}
+    \label{alg:backTrack}
+\end{algorithm}

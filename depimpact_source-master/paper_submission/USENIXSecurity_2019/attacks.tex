@@ -1,0 +1,56 @@
+\subsubsection{APT Attacks}
+\label{subsubsec:attack-cases}
+
+We performed five APT attacks that capture the important traits of APT attacks depicted from the Cyber Kill Chain framework~\cite{cyberkillchain}. 
+Note that an APT attack consists of a series of steps, and some steps may not be captured by system monitoring (\eg user inputs and inter-process communications).
+Such limitations can be addressed by employing more powerful auditing tools, but it is out of the scope of this paper.
+Thus, we identified 10 key steps that are related to POI entities for our evaluations in the five APT attacks.
+
+
+\myparatight{APT Attack 1: Zero-Day Penetration to Target Host}
+The scenario emulates the attacker's behavior who penetrates the victim's host
+leveraging previously unknown Zero-day attack. Zero-day vulnerabilities are
+attack vectors that previously unknown to the community, therefore allow the
+attacker to put their first step into their targets. In our case, we assume that
+the {\tt bash} binary in victim's host is outdated and vulnerable to shellshock~\cite{shellshock}. The victim computer hosts web service that has
+CGI written as BASH script. The attacker can run an arbitrary command when she
+passes the specially crafted attack string as one of environment variable. Leveraging the vulnerability, the attacker runs a series of remote commands to
+plant and run initial attack by: (1) transferring the payload (\emph{penetration-c1}), (2) changing its permission, and (3) running the payload to bootstrap its campaign (\emph{penetration-c2}).
+% As a lateral movement, the
+% attacker downloads (4) a password cracker program from outside run it against
+% the shadow password files. 
+
+
+\myparatight{APT Attack 2: Password Cracking After Shellshock Penetration}
+% Once breaks into the system, the attacker can launch different malicious
+% behaviors (\eg password cracking, information leakage, denial of services). 
+After initial shellshock penetration, the attacker first connects to Cloud services (\eg
+Dropbox, Twitter) and downloads an image where C2 (Command and Control) host's IP address is encoded in EXIF metadata (\emph{password-crack-c1}). The behavior is a common practice shared by APT attacks~\cite{hammertoss,vpnfilter} to evade the network-based detection system based on DNS blacklisting.
+
+Using the IP, The malware connects to C2 host. C2 host directs the malware to take
+some lateral movements, including a series of stealthy reconnaissance maneuvers. 
+In this stage, the attacker generally takes a number of actions. Among those, we emulate the password cracking attack. The attacker downloads password cracker payload (\emph{password-crack-c2}) and runs it against password shadow files (\emph{password-crack-c3}).
+
+\myparatight{APT Attack 3: Data Leakage After Shellshock Penetration}
+After lateral movement stage, the attacker attempts to steal all the valuable assets from the host. 
+This stage mainly involves the behaviors of local and remote file system scanning activity, copying and compressing of important files, and transferring to its C2 host.
+The attacker scans the file system, scrap files into a single compress file and transfer it back to C2 host (\emph{data-leakage}).
+
+\myparatight{APT Attack 4: Command-line Injection with Input Sanitization Failures}
+Different from the previous shellshock case, a program may contain vulnerabilities introduced by developer errors and this can also be a initial attack vector that invites the attacker into their target systems. To represent
+such cases, we wrote an web application prototype that fails to sanitize inputs for a certain web request, hence allows Command line Injection attack. 
+Our prototype service mimics the Jeep-Cherokee attack case~\cite{miller:remote:2015} which implements a remote access using the conventional web service API that
+internally uses DBUS service to run the designated commands. 
+Due to the developer mistake, the web service fails to sanitize the remote inputs, the attacker can append arbitrary commands followed by semi-colon({\tt;}). 
+Leveraging this vulnerability, we can download backdoor program (\emph{commend-injection-c1}) and collect sensitive data (\emph{command-injection-c2}).
+
+\myparatight{APT Attack 5: VPNFilter}
+We prototyped a famous IoT attack campaign; VPNFilter malware~\cite{vpnfilterschenier}, which infected millions of dozens of different IoT devices exploiting a number of
+known or zero-day vulnerabilities~\cite{vpnfilter1,vpnfilter2}. The attack's
+significance lies in how the malware operates during its lateral movement stage following its initial penetration. 
+The campaign employs up-to-date hacker practices to bypass conventional security solutions based on static blacklisting approaches and has an architecture to download plug-in payload on-demand, at run-time. 
+We prototyped the malware referring to one of its sample for x86 architecture~\cite{vpnfilterx86}. 
+
+The VPNFilter stage 1 malware accesses a public image repository to get an image. In the EXIF metadata of the image, it contains the IP address for the stage 2 host (\emph{vpnfilter-c1}). It downloads the VPNFilter stage2 from the stage2 server, and runs it (\emph{vpnfilter-c2}).
+
+

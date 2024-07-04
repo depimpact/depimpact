@@ -1,0 +1,116 @@
+
+
+
+\subsubsection{Reputation Propagation}
+\label{subsec:reputation-results}
+We evaluate the effectiveness of \tool in identifying whether POI entities come from trusted sources or untrusted sources via reputation propagation in both normal and malicious scenarios, respectively.
+
+\myparatight{Reputation Assignment}
+% All the nodes that have no incoming edges are considered as seed nodes.
+For evaluation purposes, 
+we set the reputation of entry nodes representing trusted sources to $1.0$,
+and entry nodes representing system libraries to $0.5$.
+In malicious scenarios and real attacks, we set the reputation of entry nodes representing untrusted sources to $0.0$.
+We propagate the reputation from entry nodes,
+and record the reputation scores of the POI (referred to as \emph{POI reputation}).
+An effective approach will lead to a POI reputation that is close to $1.0$ in the benign scenarios, instead of closing to $0.5$ (similar to neutral libraries) or $0.0$ (incorrectly associating the POI to untrusted sources).
+Similarly, an effective approach should lead to a POI reputation close to $0.0$ in the malicious scenarios.
+
+\myparatight{Comparison Approaches}
+To demonstrate the effectiveness of \tool's weight computation, we compare \tool with the following three weight computation approaches:
+\begin{itemize}[noitemsep, topsep=1pt, partopsep=1pt, listparindent=\parindent, leftmargin=*]
+    
+    \item \lpfixed: We select a fixed parameter vector $(0.1, 0.5, 0.4)$ by manually tuning the parameters and then normalize it to be the projection vector.
+    
+    \item \lpglobal: We globally cluster all edges in the graph using Multi-KMeans++ and compute the projection vector using our extended version of LDA. 
+    
+    \item \lpglobalplus: Same as previous one, but for nodes that have only one incoming edge (\ie outlier edges), we do not consider these edges in the global clustering and global projection vector computation, and directly assign their final weights to $1.0$.
+
+    % \item \tool: This is the one described in \cref{subsec:weight-computation}. We locally cluster the incoming edges of every node using Multi-KMeans++ and locally compute the projection vector using extended LDA.
+    
+\end{itemize}
+
+Furthermore, we compare our weight computation approach with the fanout approach used in the state-of-the-art causality analysis approach, PrioTracker~\cite{liu2018priotracker}.
+PrioTracker mainly uses the fanout of nodes to prioritize the dependencies in the causality analysis for a given POI event.
+% While they also use a rareness score based on the reference models built upon normal activities in their proprietary environment, their models are not publicly available and difficult to generalize from their organizations to our deployed environment.
+% Given that the rareness score accounts for only a small portion of their priority (\ie 27\%), we use only the fanout of nodes to compute edge priories.\footnote{Note that the reference models are complementary to \tool, and \tool can easily integrate the rareness score with our weights to compute to final edge weights.}
+We then adapt the computed priories as the edge weights, and apply our algorithm for reputation propagation.
+In this way, we can do a fair comparison between \tool and fanout approach in reputation propagation.
+However, note that PrioTracker does not enable reputation propagation as \tool does.
+
+\input{tables/benignCasesHighRP.tex}
+% \input{tables/attacksHighRP.tex}
+\input{tables/benignCasesLowRP.tex}
+
+\input{tables/attacksLowRP.tex}
+
+
+\myparatight{POI Reputations of \tool}
+\cref{tab:benignHighRP,tab:benignLowRP} show the results for benign and malicious payloads through key system interfaces.
+\cref{tab:attackLowRP} shows the results for the real attacks.
+The results show that \tool effectively propagates the reputation scores from entry nodes to the POI entities (averagely $0.99$ for benign scenarios and averagely $0.03$ in malicious scenarios).
+This indicates the effectiveness of our weight computation and reputation propagation.
+%inheritance.
+
+\myparatight{Entry Nodes}
+The Column ``Entry Nodes'' in \cref{tab:summary} shows the number of entry nodes.
+As we can see, most of the entry nodes in dependency graph are libraries nodes, whose reputation can be assigned automatically using a pre-compiled list of verified libraries (for high reputation) and vulnerable libraries (for low reputation).  
+The remaining non-lib nodes are likely to be root causes nodes, and their initial reputation could be set by security analysts based on their domain knowledge.
+%This result show that
+%indicates that 
+The results indicate that \tool converts the labor-intensive graph inspection task to the reputation assignment, significantly reducing manual efforts in attack investigation.
+
+\myparatight{Impact of Non-Critical Edges with High Weights} 
+Although most of the non-critical edges in a dependency graph have low weights as shown in \cref{fig:box}, it's still possible for some non-critical edges to have high weights (\eg edges corresponding to data exchange of similar amount as the POI in irrelevant activities). 
+However, we observe that the path from these activities to the POI are often cut off by edges with very low weights later, and hence these activities will have limited influence on the reputation of the POI node. 
+To further confirm our observation, we use DBSCAN~\cite{ester1996density} (epsilon=$0.01$, minimal samples=$5$) to cluster the nodes in the real attack cases based on their final reputations. 
+Results show that in all cases the nodes form two clusters and the nodes in the attack path are put in one cluster, which contains only nodes that are relevant to the attack activities.
+%In all cases, these clusters contain only nodes relevant to the attack activity, indicating 
+This indicates that non-critical edges with high weights did not adversely impact the POI reputation.
+
+\myparatight{Comparisons with Other Weight Computation Approaches}
+From \cref{tab:benignHighRP,tab:benignLowRP,tab:attackLowRP},
+we have the following observations:
+(1) The performance of \lpglobalplus significantly improves over \lpglobal.
+This shows the effectiveness and necessity of treating outlier edges differently when doing weight computation;
+(2) \lpfixed performs better than \lpglobal and \lpglobalplus in system tasks through key system interfaces in both benign and malicious scenarios (\cref{tab:benignHighRP} and \cref{tab:benignLowRP}).
+This shows that the dependency graph is quite diverse and it is difficult to separate all edges into two discriminative groups.
+However, treating the outlier edges differently in \lpglobalplus improves over \lpfixed for real attacks;
+(3) \tool achieves the best performance in most of the cases. Specifically, \tool achieves an average of 34.67\%, 62.82\%, and 43.76\% improvement over \lpfixed, \lpglobal, and \lpglobalplus in benign scenarios (\cref{tab:benignHighRP}), and an average of 94.52\%, 95.61\%, 86.21\% improvement in malicious scenarios (\cref{tab:benignLowRP,tab:attackLowRP}).
+The results clearly show the necessity and superiority of clustering and projecting edges locally for each sink node.
+Note that this approach also treats outliers locally by directly setting their weights to 1, and thus \tool embraces the merits of \lpglobalplus and achieves the best performance.
+
+
+\myparatight{Comparison with Fanout}
+The results show that \tool achieves an average of 57.22\% improvement over fanout in benign scenarios (\cref{tab:benignHighRP}) and an average of 87.22\% improvement
+%over fanout 
+in malicious scenarios (\cref{tab:benignLowRP,tab:attackLowRP}).
+As we can see from \cref{tab:attackLowRP}, while the average POI reputation achieved by fanout is $0.10$, it achieves bad performance for \textit{penetration-c1} ($0.30$), \textit{penetration-c2} ($0.43$), and \textit{password-crack-c1} ($0.25$),
+which will incorrectly label the malicious payloads as neutral (closing to $0.5$),
+while \tool correctly assigns low POI reputations ($\leq 0.04$) for these attack steps.
+These results demonstrate the superiority of \tool over fanout.
+
+
+%\input{tables/seedCounting.tex}
+
+
+
+
+
+
+
+
+
+\eat{
+\myparatight{\tool Summary}\pfang{This part need review}\cref{tab:summary} summarizes the result about benign scenarios and APT attacks. Although the edge number after Backtrack is much smaller compared with the event number in the log, for most cases, it has about 10 thousands to 20 thousands edges. It is still a daunting task for security analysts to identify the critical edges from a graph containing so much edges (\eg \textit{shellshock\_leak}). \tool doesn't only find the critical edges buried by non-critical edges, but also constructs an attack path using these critical edges. At the same time, we may miss some critical edges, because we manually identify these critical edges in the filtered graph provided by \tool. The expected reputation for all cases listed in this table is 0.0. We could see the average reputation of critical nodes is smaller than the non-critical nodes. There are obvious differences between critical and non-critical nodes.
+
+By employing this scheme to compute weights, \tool effectively identifies whether a POI entity comes from trusted or malicious sources by propagating initial reputation from seeds.
+}
+
+
+
+
+
+\eat{
+\xiao{XXX} 66.8\% \pfang{: $\frac{1.3467Manual - 0.8072Manual}{0.8072Manual}$ this calculation is based on the average improvement} improvement over the edge priority based on the fanout of nodes. This is calcualted as $\frac{RP_{avg\_LocalProjection} - RP_{avg\_Fanout}}{RP_{avg\_Fanout}}$Compared with the pure edge priority method, \tool also considers time and data information about POI events. The improvement shows the advantage of \tool to process the dependency graph with complex structure. \pfang{need revise}
+}

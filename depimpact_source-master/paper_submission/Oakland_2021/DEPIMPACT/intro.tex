@@ -1,0 +1,178 @@
+\section{Introduction}
+\label{sec:intro}
+
+
+Recent cyber attacks have plagued many well-protected businesses, causing significant 
+financial losses~\cite{ebay,opm,target,homedepot,ya:yahooleak,equifax,marriott}.
+These attacks often exploit multiple types of vulnerabilities to infiltrate into target systems in multiple stages, posing challenges for detection and investigation.
+To counter these attacks, recent approaches based on \emph{ubiquitous system monitoring} have emerged as an important approach for monitoring system activities and performing attack investigation~\cite{backtracking,backtracking2,wormlog,logtracking,mcitracking,liu2018priotracker,gao2018aiql,gao2018saql}.
+System monitoring collects kernel auditing events about system calls as system audit logs.
+The collected data enables approaches based on \textit{causality analysis}~\cite{backtracking,backtracking2,taser,intrusionrecovery,liu2018priotracker,mcitracking,hassan2019nodoze,ma2016protracer} to identify entry points of intrusions (backward tracing) and ramifications of attacks (forward tracing), 
+which have been shown to be effective in reducing false alerts of intrusions~\cite{alertfp,alertfp2,hassan2019nodoze} and assisting timely system recovery~\cite{taser,intrusionrecovery}.
+% which is critical for timely system recovery and future compromise prevention.
+
+While the research on attack investigation based on causality analysis shows great potential, 
+existing approaches require non-trivial efforts of inspection~\cite{auditcluster,hassan2019nodoze}, which limits their wide adoption.
+Causality analysis approaches assume causal dependencies between system entities (\eg files, processes, and network connections) that are involved in the same system call event (\eg a process reading a file).
+Based on such assumption, these approaches organize system call events in a system dependency graph, with nodes being system entities and edges being system events.
+By inspecting such a dependency graph, security analysts can \textit{obtain the contextual information of an attack} by reconstructing the chain of events that leads to the POI (Point-Of-Interest) event (\eg an alert event).
+Such contextual information is particularly effective in distinguishing benign and attack-related events such as distinguishing benign uses of \textit{ZIP} from ransomware~\cite{hassan2019nodoze,ransomware}.
+However, due to the dependency explosion problem~\cite{beep,reduction,reduction2}, it is 
+%very 
+hard for security analysts to understand a huge graph (typically containing $>$100,000 edges~\cite{hassan2019nodoze,auditcluster}), and find the edges that are critical to the attack (\ie finding damaging needles in a very large haystack).
+
+
+\myparatight{Key Insight}
+Existing work~\cite{backtracking,backtracking2,taser,intrusionrecovery,liu2018priotracker,mcitracking,hassan2019nodoze,ma2016protracer}
+%~\cite{backtracking,backtracking2,taser,intrusionrecovery,liu2018priotracker} 
+mainly relies on the event time to identify causal dependencies (\eg writing a file before reading it) and the 
+%generated 
+dependency graph contains many dependencies that are less important to attack investigation.
+By carefully inspecting the dependency graphs of various attacks~\cite{gao2018aiql,mcitracking,liu2018priotracker,ma2016protracer}, we have two key observations.
+%
+First, on a large dependency graph constructed from a POI event,
+a small number of \emph{critical edges} (\eg events that create and execute malicious payloads) that represent the attack sequence are typically buried in many non-critical edges (\eg events that perform irrelevant system activities).
+Compared to non-critical edges, critical edges typically present a different set of properties (\eg amount of data flow) 
+%that are more correlated with POI.
+and are more related to the POI event in these properties.
+Second, a POI event is often caused by a few sources, referred to as \emph{attack entries}.
+These attack entries are entry points of the attack sequence that leads to the POI event, and are buried in many other irrelevant entry nodes (\ie nodes without incoming edges) in the dependency graph.
+%that largely affect the creation of POI.
+For example, many attacks start by injecting a malicious script into the victim host 
+and may further download more tools along the attack.
+Such an attack is captured in a dependency graph with the attack entries representing the downloaded malicious script and tools. 
+%
+
+
+
+
+
+
+\myparatight{Challenges}
+%Based on these observations, i
+If we manage to distinguish critical edges and attack entries from non-critical edges and irrelevant entries, 
+the size of the dependency graph can be greatly reduced while preserving the attack sequence, which facilitates attack investigation.
+However, due to the dependency explosion problem,
+there are two major challenges for achieving such goals.
+
+%
+As illustrated previously, the large number of non-critical edges come from the less-important dependencies brought by causality analysis, and the less-important dependencies then come from irrelevant system activities performed by processes that are causally related to the POI event.
+Furthermore, these irrelevant system activities often trace back to many irrelevant sources (\eg irrelevant web browsing and file downloads) that have low impact on the POI event, and thus causality analysis may identify more than a thousand entry nodes (\cref{subsec:evalsetup}).
+As a result, manually inspecting these daunting number of edges and entry nodes requires a significant amount of efforts.
+
+The problem becomes even more challenging when different POI events are selected for investigation and different attack scenarios are considered. 
+While existing techniques have made attempts to address these problems, they mainly rely on heuristic rules that cause loss of information~\cite{backtracking}, intrusive system changes~\cite{ma2016protracer,mcitracking} such as binary instrumentation and kernel customization, or execution profiles~\cite{hassan2019nodoze}, hindering their practical adoption.
+
+To facilitate attack investigation, there is a pressing need for automated techniques
+%that capture the differences and
+to reveal critical edges and attack entries.
+The challenge is to design a general solution framework that (1) encapsulates such automated techniques, (2) is broadly applicable to different POI events and diversified attack scenarios, and (3) does not suffer from the same adoption limitations as existing techniques.
+
+%Furthermore, critical edges in different attack scenarios typically present different properties, and thus relying on a single feature (\eg node degree) to distinguish edges is often insufficient to oversee a diversified set of attack scenarios.
+%As such, how to extract good features that capture the fundamental differences between critical edges and non-critical edges and how to combine these features into an aggregated score become a key challenge.
+
+
+\myparatight{Contributions}
+Based on the key insights, we propose \tool, a framework that \emph{facilitates attack investigation by revealing critical edges and attack entries, without heuristic rules, intrusive system changes, or execution profiles}.
+Specifically, given a POI event to be investigated, 
+\tool first applies causality analysis to construct a dependency graph for the POI event, and then employs automated techniques to identify the \emph{critical component} of the dependency graph.
+Critical component, by definition, is a subgraph of the dependency graph that preserves the information critical to attack investigation (\ie critical edges and attack entries).
+Compared to the original dependency graph, the size of the critical component is significantly reduced (\cref{subsec:rq1}), which makes it easy for security analysts to obtain the contextual information of the attack.
+For example, security analysts can inspect attack entries to identify the entry points of the attack, and inspect critical edges to gain visibility into the attack sequence.
+
+In particular, to address the aforementioned challenges, \tool employs three major techniques as follows:
+
+\emph{(1) Dependency Weight Computation:}
+To capture the differences between critical edges and non-critical edges, 
+%instead of using event time only, 
+for each edge, \tool extracts multiple features (\eg time, data flow amount, node degree) that capture such differences from multiple aspects (\cref{subsubsec:feature-extraction}).
+%
+Then, \tool employs a \emph{discriminative feature projection scheme} based on Linear Discriminant Analysis (LDA)~\cite{Mika99fisherdiscriminant} to compute a weight score from the features, referred to as \emph{dependency weight} (\cref{subsubsec:weight-computation}). 
+Dependency weight, by definition, is a score in the range $[0.0,1.0]$ that models the coupling strength between the dependency edge and the POI event.
+An edge with a higher dependency weight implies more relevance to the POI event, and is more likely to be a critical edge.
+Our feature projection scheme finds an optimal projection plane for the features, so that the projected dependency weights of critical edges and non-critical edges are maximally separated.
+%and critical edges generally have higher weights
+Using dependency weight, critical edges and non-critical edges can be distinguished, and the dependency graph becomes a weighted dependency graph that encodes such differences. 
+
+\emph{(2) Dependency Impact Back-Propagation \& Entry Node Ranking:} 
+To reveal attack entries, \tool employs a notion of \emph{dependency impact}. 
+Dependency impact, by definition, is a score\footnote{The value of dependency impact is in the range $[0.0,1.0]$, with $1.0$ representing the max impact.} for each node in the dependency graph that models the node's impact on the POI event, \ie a higher score implies a higher impact.
+To compute the dependency impacts for all nodes, \tool employs a weighted score propagation scheme that propagates the dependency impact from the nodes ($1.0$ by default for both source node and sink node) in the POI event backward along the edges to all entry nodes.
+Inspired by TrustRank~\cite{Gyongyi:2004:vldb}, our score propagation scheme computes the dependency impact of a node using a weighted sum of its child nodes' dependency impacts, and the weights are the normalized dependency weights of the node's outgoing edges.
+The intuition behind our score propagation scheme is that for an attack entry that has a high impact on the POI event, its child nodes on the attack sequence should also have a high impact, proportionally by the dependency weight of the edges that connect to the child nodes.
+By taking the normalization, we guarantee that the node's impact is not greater than the maximum of its child nodes' impacts, so that the dependency impact of a node will not be over $1.0$ and will gradually degrade through the propagation.
+\tool iteratively updates the scores for all the nodes until a stable point is reached.
+After propagation, \tool ranks the entry nodes based on their dependency impacts, and the top-ranked entry nodes are likely to be attack entries.
+
+
+\emph{(3) Forward Causality Analysis for Critical Component Identification:} 
+After ranking the entry nodes, \tool performs forward causality analysis from the top-ranked entry nodes, producing another dependency graph, called \textit{forward dependency graph}.
+The overlap between the forward graph and the original backward dependency graph produced by the backward causality analysis from the POI event well preserves the nodes and edges that are highly related to both the POI event and the attack entries.
+Such overlap is referred to as the \emph{critical component} of the original dependency graph, which preserves the critical attack information at a reduced size.
+
+
+
+
+
+
+% Flow: 3 RQs
+\myparatight{Evaluation}
+We implemented \tool ($\sim$20K lines of code) and deployed it on a server to collect real system monitoring data.
+%and evaluated \tool in commonly used exploits and real attack cases.
+We performed 7 attacks that are used in prior studies~\cite{exploitdb,liu2018priotracker,kwon2018mci,reduction} and 3 multi-step intrusive attacks based on the Cyber Kill Chain framework~\cite{cyberkillchain} and CVE~\cite{cve}, and applied \tool to investigate them.
+%
+During our evaluation, the deployed hosts continue to resume their routine tasks to emulate the real-world deployment where irrelevant system activities and attack activities co-exist.
+In total, we collected ${\sim}100$ million system auditing events.
+%for the attacks.
+
+The evaluation results show that \tool is highly effective in revealing critical edges and attack entries.
+On average, the size of the critical component produced by \tool has $\sim260$ edges, which is $\sim2,700\times$ smaller than the size of the original dependency graph ($\sim700,000$ edges) produced by directly applying causality analysis.
+%from the POI event.
+Such a high reduction rate is achieved \textit{without missing any critical edge}, which is mainly due to the fact that \tool consistently \textit{ranks the attack entries at the top ($3.13$ on average)}, demonstrating the effectiveness in using the top-ranked entry nodes for identifying critical components. 
+Compared with the average-projection approach that uses an average projection vector for computing dependency impacts, \tool achieves $29.34\%$ improvement in ranking attack entries, demonstrating the superiority of \tool's discriminative feature projection scheme.
+
+The comparison with four other state-of-the-art causality analysis techniques (CPR~\cite{reduction}, ReadOnly~\cite{loggc}, PrioTracker~\cite{liu2018priotracker}, and NoDoze~\cite{hassan2019nodoze}) shows that \tool is \textit{at least $33\times$ more effective in dependency graph reduction}. Furthermore, \tool does not share the same adoption limitations as these techniques (\eg training on an execution profile and reputation assignment~\cite{hassan2019nodoze}).
+
+
+Finally, \tool finishes analyzing an attack within $8$ minutes, which is $\sim5\times$ faster when compared with the average-projection approach.
+While \tool needs more time for dependency weight computation using clustering and LDA ($\sim102s$), the average-projection approach fails to distinguish critical edges and non-critical edges due to poor weight assignment, and spends a significantly more time in score propagation ($\sim1700s$; the propagation takes more iterations to converge).
+\tool and the state-of-the-art technique, NoDoze, have similar runtime performance for most of the attacks.
+Though on average \tool is slightly slower than NoDoze ($\sim5$ minutes), 
+\tool produces much smaller graphs for the attacks that \tool takes longer time to analyze ($\sim800$ edges v.s. $>20,000$ edges), which facilitates further attack investigation.
+
+
+%Considering that the dependency graph has $\sim1.3$ million edges on average, \tool is highly effective and efficient to reveal the critical edges compared with the manual inspection, which will take much longer time.
+%more than $8$ minutes.
+
+
+\eat{
+The evaluation results clearly demonstrate the superiority of \tool in dependency graph reduction, attack-relevant information preservation, and system performance:
+(1) We demonstrate that methods based on edge weights or clustering are not effective in achieving high reduction rate and revealing attack sequences, which motivates the design of \tool.
+In contrast, \tool achieves $96\%$ reduction rate on average;
+(2) We demonstrate that \tool can rank attack-relevant entry nodes\pgao{need to be consistent on name} in the upfront (at position $3.13$ on average) in the presence of a large number of irrelevant entry nodes ($7,575.3$ on average);
+(3) On average, \tool can finish the analysis within $8$ minutes, given the computation resources provided.
+%by the server. 
+The performance can be further easily improved by leveraging parallel execution.
+}
+
+
+
+
+%(\eg fanout of the edges~\cite{liu2018priotracker}\footnote{They also use reference models, but the reference models account for mere 27\% of the priority score~\cite{liu2018priotracker}.}) 
+%For example, the fanout of edges fails to assign a high priority score to an edge that creates a malware script from a browser, which also writes to many other files and thus has many outgoing edges.
+\eat{
+\emph{(2) Long Dependency Paths:} Due to the multi-stage nature of APT attacks~\cite{fireeye:anatomy,aptsymantec}, the dependency paths from entry nodes to the POI often have many hops. 
+If a node propagates its reputation in a distribution fashion (\ie distributes its reputation along outgoing edges in portions)~\cite{Page:techreport:1998,cao2012sybilrank}, the reputation will degrade rapidly in the middle of the path, failing to characterize the impact of entry nodes on POI.
+As such, how to design a good weight-aware reputation propagation scheme that prevents the reputation degradation on long paths becomes another key challenge.
+
+To prevent the rapid degradation of reputation on long dependency paths, \tool propagates reputation in an \emph{inheritance fashion} (\cref{subsubsec:propagation}):
+%rather than a distribution fashion:
+the reputation of a source node gets inherited to all its sink nodes rectified by the edge weights.
+%rather than distributed to the sink nodes in portions.
+%when \tool propagates the reputation from a source node $u$ to a sink node $v$ along an edge $e(u, v)$ (the direction of $e$ indicates the direction of data flow), $v$'s reputation will inherit $u$'s reputation mutiplied by the weight of $e(u, v)$. 
+Such propagation scheme ensures that the reputation from root cause nodes through the critical edges can be preserved even when propagated along long paths.}
+
+
+\eat{
+a node's impact will be proportionally propagated through an outgoing to a child node based on the edge's dependency weight.
+need more explanation. Here are some explanations that I can think of: (1) for an attack entry that has high impact on POI, its children nodes on the attack sequence also have high impact. This is how things should behave and is irrelevant to our computation mechanism; (2) so if we think reversely, for a node, if its child nodes have high impacts and the edge weights are high, then the impact score for this node should be high; (3)  (why?), so that the propagation can reach a stable point}

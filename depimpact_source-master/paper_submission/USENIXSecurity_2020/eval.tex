@@ -1,0 +1,106 @@
+\section{Evaluation}
+
+
+We built \tool ($\sim$20K lines of code) upon Sysdig~\cite{sysdig}, and deployed our tool in a server to collect system auditing events and perform attack investigation. 
+The server is used by other users for performing daily tasks, so that enough noise of irrelevant system activities can be collected.
+We performed a series of attacks based on known exploits~\cite{exploitdb,liu2018priotracker,kwon2018mci,reduction} in the deployed environment,
+and applied \tool to
+%perform attack investigation on the 
+investigate these attacks, demonstrating the effectiveness of \tool.
+In total, our evaluations use real system monitoring data that consists of \emph{100 million} events. 
+%Each attack is done with the time gap being at least 1 hour.
+
+%Specifically, we 
+In this section, we aim to answer the following research questions:
+
+\begin{itemize}[noitemsep, topsep=1pt, partopsep=1pt, listparindent=\parindent, leftmargin=*]
+\item RQ1: How effective is the weight-based and cluster-based approaches for dependency graph reduction?
+\item RQ2: How effective is \tool in dependency graph reduction?
+\item RQ3: How effective is \tool in ranking the entry nodes?
+\item RQ4: How effective is \tool in dependency graph reduction compared with other state-of-the-art dependency analysis methods?
+\end{itemize}
+RQ1 aims to measure the effectiveness of using only weights for graph reduction.
+Its results will provide motivation for the design of \tool.
+RQ2 aims to evaluate the effectiveness of \tool on using forward causality analysis from top ranked entry nodes.
+RQ3 aims to measure whether the ground-truth sources that cause the POI event are among the top ranked entry nodes.
+RQ4 will show the comparison with other related approaches. At the same time, we also measure the performance overhead of \tool.
+\eat{
+we compare the weight computation in \tool with the fantou feature used by the state-of-the-art causality analysis, PrioTracker~\cite{liu2018priotracker}.
+We also compare the results with three other weight computation approaches.
+Second, to evaluate the effectiveness of \tool in propagating reputations,
+we compare the reputation scores of the POI against the expected reputation scores in benign scenarios (POI caused by trusted sources) and attack scenarios (POI caused by suspicious sources).
+Finally, we evaluate the effectiveness of \tool in revealing critical edges for attack sequence reconstruction.}
+
+
+
+
+% \subsection{Evaluation Results}
+% To evaluate the accuracy and effect of our method, we prepared 20 cases. There are 10 cases covering the most common user activities including file read/write, network download and decompress. Table~\ref{tab:benignHighRP} shows the reputation result of four methods.
+% Table~\ref{tab:Reduction} shows our method reduction rate.
+\input{tables/usenix/sizeStatisticalSummary}
+\subsection{Evaluation Setup}
+\label{subsec:cases}
+The evaluations are conducted on a server with an Intel(R) Xeon(R) CPU E5-2637 v4 (3.50GHz), 256GB RAM running 64bit Ubuntu 18.04.1.
+To evaluation \tool, we apply \tool to investigate 7 commonly used exploits and 3 real attacks. We performed the exploits and the real attacks in the deployed environment, collected the system auditing events, and applied \tool to analyze the events.
+
+\subsubsection{Commonly Used Exploits}
+\label{subsub:benign-cases}
+These commonly used exploits are also used as the test cases in prior work~\cite{exploitdb,liu2018priotracker,kwon2018mci,reduction}.
+The 7 commonly used exploits contains the following scenarios:
+\begin{itemize}[noitemsep, topsep=1pt, partopsep=1pt, listparindent=\parindent, leftmargin=*]
+    \item Wget Executable: An vulnerable server allows attackers to use wget to download  executable files. The attacker downloaded python scripts and then executed them.
+    \item Illegal storage: A server administrator downloads some files to a user's home directory.
+    \item Illegal storage 2: A server administrator uses different tools to download files to a user's home directory.
+    \item Hide File: For this case, the goal of the attacker is to hide malicious file among the user's normal files. The attacker will download the malicious script and hide it by changing its file name or location.
+    \item Steal Information: An attacker steals the user's sensitive information and then write the information to a hidden file.
+    \item Backdoor Download: An insider uses the ping command to connect to the malicious server, and then downloads the backdoor script from the server and hides the backdoor.
+    \item Annoying Server User: There is a unsafe server used by several different users. The annoying user logs into other users' home directories and write some garbage data to other users' files. 
+\end{itemize}
+
+
+\eat{
+\begin{itemize}[noitemsep, topsep=1pt, partopsep=1pt, listparindent=\parindent, leftmargin=*]
+\item File merge: \emph{2File}, \emph{3File}
+
+\item Shell execution: \emph{shell-script} (list all files in the Home folder and write the results to a file)
+
+\item File download: \emph{curl}, \emph{wget}, \emph{shell-wget} (wget called by a shell script), \emph{python-wget} (wget called by a Python script)
+
+\item File transfer: \emph{scp}
+\end{itemize}
+}
+
+
+
+\input{attacks.tex}
+
+
+
+
+
+
+
+\subsection{Evaluation Results}
+\label{subsec:eval-results}
+
+\input{rq1.tex}
+
+\input{rq2.tex}
+
+\input{rq3.tex}
+
+\input{rq4.tex}
+\input{evalperf.tex}
+%\input{evalcompare.tex}
+
+\subsection{Summary}
+The evaluation results show that \tool is effective in irrelevant-edges reduction, and this reduction also keeps the critical edges by choosing multiple entry nodes to do the forward causality analysis for reduction. 
+In summary, the average reduction rate achieved by \tool is $96\%$. 
+Such a great reduction result relies on the proper selection of the relevant entry nodes for the forward causality analysis. 
+Our results show that \tool can rank these attack-relevant entry nodes at the high position ($3.13$ on average). 
+Finally, \tool can finish the attack analysis within $8$ minutes.
+Considering the dependency graph has about $130,000$ edges on average, \tool is highly effective and efficient to reveal the critical edges compared with the manual inspection, which will take much more than $8$ minutes.
+
+
+
+
