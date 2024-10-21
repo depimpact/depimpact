@@ -25,12 +25,3 @@ Run the class "ExperimentRunnerCmd". Parameters are:
 
 E.g.,  "/logfilepath" "/resultspath" "cmd_inject.txt" "clusterall"
 ```
-
-### 2. Hard code
-#### 2.1 Use ProcessOneLogTest
-Specify the parameter in the main function in ProcessOneLogTest and run.
-
-#### 2.2 Use ExperimentRunner
-ExperimentRunner reads property files related to a log and calls process() in processOneLog.
-
-ExperimentRunner has 3 constructors, please read the code.  
