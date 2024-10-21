@@ -4,7 +4,7 @@ Prior to running, a log and it's related property file should be prepared. The l
 > cmd_inject.txt
 > cmd_inject.backward.property 
 ```
-### 1. Through Java
+### Through Java
 Run the class "ExperimentRunnerCmd". Parameters are:
 ```
 1. path to logs and property files
